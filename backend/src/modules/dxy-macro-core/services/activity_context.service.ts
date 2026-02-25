@@ -1,16 +1,19 @@
 /**
- * ACTIVITY CONTEXT SERVICE — B4.2
+ * ACTIVITY CONTEXT SERVICE — B4.2 + P3.2 (As-Of)
  * 
  * Computes context and pressure for PMI & economic activity series:
  * - NAPM: ISM Manufacturing PMI
  * - INDPRO: Industrial Production
  * - TCU: Capacity Utilization
  * 
+ * P3.2: Supports as-of queries for honest backtesting.
+ * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
 import { getMacroSeriesPoints } from '../ingest/macro.ingest.service.js';
 import { getMacroSeriesSpec } from '../data/macro_sources.registry.js';
+import { filterByAsOf } from '../../macro-asof/asof.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
