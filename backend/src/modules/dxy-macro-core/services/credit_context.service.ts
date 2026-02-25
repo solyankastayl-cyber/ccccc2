@@ -1,16 +1,19 @@
 /**
- * CREDIT CONTEXT SERVICE — B4.3
+ * CREDIT CONTEXT SERVICE — B4.3 + P3.2 (As-Of)
  * 
  * Computes context and pressure for credit & financial stress series:
  * - BAA10Y: Moody's BAA Corporate Spread
  * - BAMLH0A0HYM2: High Yield Spread (ICE BofA)
  * - STLFSI4: St. Louis Fed Financial Stress Index
  * 
+ * P3.2: Supports as-of queries for honest backtesting.
+ * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
 import { getMacroSeriesPoints } from '../ingest/macro.ingest.service.js';
 import { getMacroSeriesSpec } from '../data/macro_sources.registry.js';
+import { filterByAsOf } from '../../macro-asof/asof.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -380,6 +383,237 @@ function buildEmptyContext(seriesId: string, displayName: string): CreditSeriesC
 }
 
 // ═══════════════════════════════════════════════════════════════
+// P3.2: AS-OF SERIES CONTEXT
+// ═══════════════════════════════════════════════════════════════
+
+async function buildBaaContextAsOf(asOfDate: string): Promise<CreditSeriesContext> {
+  const seriesId = 'BAA10Y';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? "Moody's Baa Spread";
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    const points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const delta12m = computeDelta(points, current, 12);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, stats?.std5y ?? 0.5);
+    const regime = classifySpreadRegime(stats?.z5y ?? null);
+    const pressure = calcSpreadPressure(stats?.z5y ?? null);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current * 1000) / 1000, date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 1000) / 1000 : null,
+        delta12m: delta12m !== null ? Math.round(delta12m * 1000) / 1000 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Credit AsOf] Failed to build BAA context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+async function buildTedContextAsOf(asOfDate: string): Promise<CreditSeriesContext> {
+  const seriesId = 'TEDRATE';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? 'TED Spread';
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    let points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    // Convert daily to monthly
+    points = toMonthlyAverage(points);
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const delta12m = computeDelta(points, current, 12);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, stats?.std5y ?? 0.1);
+    const regime = classifyTedRegime(current);
+    const pressure = calcTedPressure(current);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current * 1000) / 1000, date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 1000) / 1000 : null,
+        delta12m: delta12m !== null ? Math.round(delta12m * 1000) / 1000 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Credit AsOf] Failed to build TED context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+async function buildVixContextAsOf(asOfDate: string): Promise<CreditSeriesContext> {
+  const seriesId = 'VIXCLS';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? 'VIX (Volatility Index)';
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    let points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    // Convert daily to monthly
+    points = toMonthlyAverage(points);
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const delta12m = computeDelta(points, current, 12);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, 3);
+    const regime = classifyVixRegime(current);
+    const pressure = calcVixPressure(current);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current * 100) / 100, date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 100) / 100 : null,
+        delta12m: delta12m !== null ? Math.round(delta12m * 100) / 100 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Credit AsOf] Failed to build VIX context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+/**
+ * P3.2: Build complete credit context as of a specific date
+ */
+export async function buildCreditContextAsOf(asOfDate: string): Promise<CreditContext> {
+  const baa = await buildBaaContextAsOf(asOfDate);
+  const ted = await buildTedContextAsOf(asOfDate);
+  const vix = await buildVixContextAsOf(asOfDate);
+  
+  // Calculate composite score (same logic as current)
+  const pressures = [
+    { weight: WEIGHTS.BAA10Y, pressure: baa.pressure, available: baa.available },
+    { weight: WEIGHTS.TEDRATE, pressure: ted.pressure, available: ted.available },
+    { weight: WEIGHTS.VIXCLS, pressure: vix.pressure, available: vix.available },
+  ];
+  
+  const available = pressures.filter(p => p.available);
+  const missingCount = 3 - available.length;
+  
+  let scoreSigned = 0;
+  let totalWeight = 0;
+  
+  if (available.length > 0) {
+    for (const p of available) {
+      scoreSigned += p.pressure * p.weight;
+      totalWeight += p.weight;
+    }
+    if (totalWeight > 0) {
+      scoreSigned = scoreSigned / totalWeight;
+    }
+  }
+  
+  scoreSigned = clamp(scoreSigned, -1, 1);
+  
+  // Confidence based on missing series
+  let confidence: number;
+  if (missingCount >= 2) {
+    confidence = 0.4;
+  } else if (missingCount === 1) {
+    confidence = 0.6;
+  } else {
+    const availablePressures = available.map(p => p.pressure);
+    const pressureStd = stdDev(availablePressures);
+    confidence = clamp(1 - pressureStd, 0.3, 1);
+  }
+  
+  // Determine composite regime
+  let regime: string;
+  const stressCount = [baa.regime, ted.regime, vix.regime].filter(
+    r => r === 'STRESS' || r === 'HIGH_STRESS'
+  ).length;
+  const calmCount = [baa.regime, ted.regime, vix.regime].filter(
+    r => r === 'CALM' || r === 'LOW_STRESS'
+  ).length;
+  
+  if (stressCount >= 2) {
+    regime = 'STRESS';
+  } else if (calmCount >= 2) {
+    regime = 'CALM';
+  } else {
+    regime = 'NEUTRAL';
+  }
+  
+  // Build note
+  let note: string;
+  if (regime === 'STRESS') {
+    note = 'Rising spreads / financial stress → USD safe-haven bid';
+  } else if (regime === 'CALM') {
+    note = 'Compressed spreads / low stress → USD tailwind reduced';
+  } else {
+    note = 'Credit conditions neutral';
+  }
+  
+  return {
+    baa,
+    ted,
+    vix,
+    composite: {
+      scoreSigned: Math.round(scoreSigned * 1000) / 1000,
+      confidence: Math.round(confidence * 1000) / 1000,
+      regime,
+      note,
+    },
+    computedAt: asOfDate,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BUILD COMPOSITE CREDIT CONTEXT
 // ═══════════════════════════════════════════════════════════════
 
@@ -494,8 +728,8 @@ export async function getCreditScoreComponent(): Promise<{
 }
 
 /**
- * P3: Get credit score as of a specific date.
- * TODO: Full as-of implementation with publication lag
+ * P3.2: Get credit score as of a specific date.
+ * Full implementation with publication lag filtering.
  */
 export async function getCreditScoreComponentAsOf(asOfDate: string): Promise<{
   key: string;
@@ -506,6 +740,17 @@ export async function getCreditScoreComponentAsOf(asOfDate: string): Promise<{
   regime: string;
   available: boolean;
 }> {
-  // Stub for P3.1 — full implementation in P3.2
-  return getCreditScoreComponent();
+  const ctx = await buildCreditContextAsOf(asOfDate);
+  
+  const anyAvailable = ctx.baa.available || ctx.ted.available || ctx.vix.available;
+  
+  return {
+    key: 'CREDIT',
+    displayName: 'Financial Stress & Credit Spreads',
+    scoreSigned: ctx.composite.scoreSigned,
+    weight: 0.15,
+    confidence: ctx.composite.confidence,
+    regime: ctx.composite.regime,
+    available: anyAvailable,
+  };
 }
