@@ -581,7 +581,7 @@ export async function getHousingScoreComponent(): Promise<{
 
 /**
  * P3: Get housing score as of a specific date.
- * TODO: Full as-of implementation with publication lag
+ * P3.2: Full implementation with publication lag
  */
 export async function getHousingScoreComponentAsOf(asOfDate: string): Promise<{
   key: string;
@@ -592,7 +592,118 @@ export async function getHousingScoreComponentAsOf(asOfDate: string): Promise<{
   regime: string;
   available: boolean;
 }> {
-  // For now, use current data (as-of filtering to be added)
-  // This is a stub for P3.1 — full implementation in P3.2
-  return getHousingScoreComponent();
+  const ctx = await buildHousingContextAsOf(asOfDate);
+  
+  const anyAvailable = ctx.mortgage.available || ctx.starts.available || 
+                       ctx.permits.available || ctx.homePrice.available;
+  
+  return {
+    key: 'HOUSING',
+    displayName: 'Housing & Mortgage Conditions',
+    scoreSigned: ctx.composite.scoreSigned,
+    weight: 0.15,
+    confidence: ctx.composite.confidence,
+    regime: ctx.composite.regime,
+    available: anyAvailable,
+  };
+}
+
+/**
+ * P3.2: Build complete housing context as of a specific date
+ */
+export async function buildHousingContextAsOf(asOfDate: string): Promise<HousingContext> {
+  // Build individual contexts with as-of filtering
+  const mortgage = await buildSeriesContextAsOf(
+    'MORTGAGE30US',
+    asOfDate,
+    calcMortgagePressure,
+    classifyMortgageRegime,
+    '3m'
+  );
+  
+  const starts = await buildSeriesContextAsOf(
+    'HOUST',
+    asOfDate,
+    calcStartsPressure,
+    classifyStartsRegime,
+    '12m'
+  );
+  
+  const permits = await buildSeriesContextAsOf(
+    'PERMIT',
+    asOfDate,
+    calcPermitsPressure,
+    classifyStartsRegime,
+    '12m'
+  );
+  
+  const homePrice = await buildSeriesContextAsOf(
+    'CSUSHPISA',
+    asOfDate,
+    calcHomePricePressure,
+    classifyHomePriceRegime,
+    '12m'
+  );
+  
+  // Calculate composite score (same logic as current)
+  const pressures = [
+    { weight: WEIGHTS.MORTGAGE30US, pressure: mortgage.pressure, available: mortgage.available },
+    { weight: WEIGHTS.HOUST, pressure: starts.pressure, available: starts.available },
+    { weight: WEIGHTS.PERMIT, pressure: permits.pressure, available: permits.available },
+    { weight: WEIGHTS.CSUSHPISA, pressure: homePrice.pressure, available: homePrice.available },
+  ];
+  
+  const available = pressures.filter(p => p.available);
+  
+  let scoreSigned = 0;
+  let totalWeight = 0;
+  
+  if (available.length > 0) {
+    for (const p of available) {
+      scoreSigned += p.pressure * p.weight;
+      totalWeight += p.weight;
+    }
+    if (totalWeight > 0) {
+      scoreSigned = scoreSigned / totalWeight;
+      scoreSigned = scoreSigned * (totalWeight / (WEIGHTS.MORTGAGE30US + WEIGHTS.HOUST + WEIGHTS.PERMIT + WEIGHTS.CSUSHPISA));
+    }
+  }
+  
+  scoreSigned = clamp(scoreSigned, -1, 1);
+  
+  const availablePressures = available.map(p => p.pressure);
+  const pressureStd = stdDev(availablePressures);
+  const confidence = clamp(1 - pressureStd, 0.3, 1);
+  
+  let regime: string;
+  if (scoreSigned > 0.2) {
+    regime = 'TIGHT';
+  } else if (scoreSigned < -0.2) {
+    regime = 'LOOSE';
+  } else {
+    regime = 'NEUTRAL';
+  }
+  
+  let note: string;
+  if (regime === 'TIGHT') {
+    note = 'Tight mortgage + weak construction → USD supportive';
+  } else if (regime === 'LOOSE') {
+    note = 'Easing housing cycle → USD pressure';
+  } else {
+    note = 'Housing conditions neutral';
+  }
+  
+  return {
+    mortgage,
+    starts,
+    permits,
+    homePrice,
+    composite: {
+      scoreSigned: Math.round(scoreSigned * 1000) / 1000,
+      confidence: Math.round(confidence * 1000) / 1000,
+      regime,
+      note,
+    },
+    computedAt: asOfDate,
+  };
 }
