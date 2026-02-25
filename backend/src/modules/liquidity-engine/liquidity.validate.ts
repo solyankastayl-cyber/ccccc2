@@ -252,10 +252,10 @@ export async function validateEpisode(
     friday.setUTCDate(currentDate.getUTCDate() + daysToFriday);
     const weekKey = friday.toISOString().split('T')[0];
     
-    // Get indices for this week
-    const walclIdx = walclByWeek.get(weekKey);
-    const rrpIdx = rrpByWeek.get(weekKey);
-    const tgaIdx = tgaByWeek.get(weekKey);
+    // Get indices for this week (find nearest)
+    const walclIdx = findNearestWeekIdx(walclWeekly, weekKey);
+    const rrpIdx = findNearestWeekIdx(rrpWeekly, weekKey);
+    const tgaIdx = findNearestWeekIdx(tgaWeekly, weekKey);
     
     // Compute Z-scores (4-week delta)
     let zWalcl: number | null = null;
