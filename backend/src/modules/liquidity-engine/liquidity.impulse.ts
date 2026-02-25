@@ -197,3 +197,61 @@ export async function getLiquidityState(): Promise<LiquidityState> {
   const ctx = await buildLiquidityContext();
   return ctx.state;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// P3: AS-OF LIQUIDITY CONTEXT
+// ═══════════════════════════════════════════════════════════════
+
+import { buildLiquiditySeriesContextAsOf } from './liquidity.context.js';
+
+/**
+ * P3: Build liquidity context as of a specific date.
+ * Only uses data that would have been available at asOfDate.
+ */
+export async function buildLiquidityContextAsOf(asOfDate: string): Promise<LiquidityContext> {
+  // Build individual contexts with as-of filtering
+  const walcl = await buildLiquiditySeriesContextAsOf('WALCL', asOfDate);
+  const rrp = await buildLiquiditySeriesContextAsOf('RRPONTSYD', asOfDate);
+  const tga = await buildLiquiditySeriesContextAsOf('WTREGEN', asOfDate);
+  
+  // Compute impulse state
+  const state = computeLiquidityImpulse(walcl, rrp, tga);
+  
+  // Determine data quality
+  const seriesAvailable = [walcl, rrp, tga].filter(s => s.available).length;
+  let dataQuality: 'GOOD' | 'PARTIAL' | 'MISSING';
+  let note: string;
+  
+  if (seriesAvailable === 3) {
+    dataQuality = 'GOOD';
+    note = 'All liquidity series available';
+  } else if (seriesAvailable > 0) {
+    dataQuality = 'PARTIAL';
+    const missing = [walcl, rrp, tga].filter(s => !s.available).map(s => s.seriesId);
+    note = `Missing series: ${missing.join(', ')}`;
+  } else {
+    dataQuality = 'MISSING';
+    note = `No liquidity data available as of ${asOfDate}`;
+  }
+  
+  return {
+    walcl,
+    rrp,
+    tga,
+    state,
+    meta: {
+      dataQuality,
+      seriesAvailable,
+      computedAt: asOfDate,
+      note,
+    },
+  };
+}
+
+/**
+ * P3: Get liquidity state as of a specific date
+ */
+export async function getLiquidityStateAsOf(asOfDate: string): Promise<LiquidityState> {
+  const ctx = await buildLiquidityContextAsOf(asOfDate);
+  return ctx.state;
+}
