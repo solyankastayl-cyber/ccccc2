@@ -135,6 +135,51 @@ export function calcSpxCouplingMultiplier(spxAdj: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// P2.4.4: LIQUIDITY MULTIPLIER (BTC-specific, stronger than SPX)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * P2.4.4: BTC liquidity multipliers.
+ * BTC is more sensitive to liquidity than SPX.
+ */
+export const LIQUIDITY_MULTIPLIERS_BTC = {
+  EXPANSION: 1.20,    // +20% boost
+  NEUTRAL: 1.00,
+  CONTRACTION: 0.75,  // -25% reduction
+} as const;
+
+// Cached BTC liquidity multiplier
+let cachedBtcLiquidityMultiplier = { value: 1.0, regime: 'NEUTRAL', updatedAt: 0 };
+
+/**
+ * Refresh BTC liquidity multiplier cache (async).
+ */
+export async function refreshBtcLiquidityCache(): Promise<void> {
+  try {
+    const result = await getBtcLiquidityMultiplier();
+    cachedBtcLiquidityMultiplier = {
+      value: result.multiplier,
+      regime: result.regime,
+      updatedAt: Date.now(),
+    };
+  } catch (e) {
+    console.warn('[BTC Cascade] Liquidity multiplier unavailable:', (e as Error).message);
+  }
+}
+
+/**
+ * Calculate BTC liquidity multiplier (sync, uses cache).
+ */
+export function calcLiquidityMultiplier(): { value: number; regime: string } {
+  // Refresh cache in background if stale (>5 min)
+  if (Date.now() - cachedBtcLiquidityMultiplier.updatedAt > 5 * 60 * 1000) {
+    refreshBtcLiquidityCache().catch(() => {});
+  }
+  
+  return { value: cachedBtcLiquidityMultiplier.value, regime: cachedBtcLiquidityMultiplier.regime };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN MULTIPLIER COMPUTATION
 // ═══════════════════════════════════════════════════════════════
 
