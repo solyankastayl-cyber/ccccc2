@@ -11,7 +11,7 @@
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
-import { buildAllMacroContexts, buildMacroContext, buildMacroContextAsOf } from './macro_context.service.js';
+import { buildAllMacroContexts, buildMacroContext, buildMacroContextAsOf, buildAllMacroContextsAsOf } from './macro_context.service.js';
 import { getHousingScoreComponent, getHousingScoreComponentAsOf } from './housing_context.service.js';
 import { getActivityScoreComponent, getActivityScoreComponentAsOf } from './activity_context.service.js';
 import { getCreditScoreComponent, getCreditScoreComponentAsOf } from './credit_context.service.js';
