@@ -311,30 +311,40 @@ type LiquidityState = {
 
 ---
 
-### P2.4 Integration — READY
+### P2.4 Integration — COMPLETE ✅ (2026-02-25)
 
-**1. Macro Score (weight 0.20):**
+**P2.4.1 Macro Score:**
+- LIQUIDITY component added (weight=0.20)
+- Rescaled weights: core=0.44, housing/activity/credit=0.12 each
 - scoreSigned = -impulse/3 (inverted for USD convention)
+- Shows in `keyDrivers` when significant
 
-**2. Guard Interaction:**
-- liquidity=CONTRACTION + credit↑ → accelerate CRISIS
+**P2.4.2 Guard Interaction:**
+- `shouldAccelerateCrisis()` checks liquidity+credit stress
+- CONTRACTION + rising credit → accelerate CRISIS transition
 
-**3. AE Brain State Vector:**
-- New axis: liquidityImpulse (-1..+1)
+**P2.4.3 AE State Vector:**
+- New axis: `liquidityImpulse` (-1..+1)
+- Full liquidity details in response
+- State vector now 7-dimensional
 
-**4. Cascade Multipliers:**
+**P2.4.4 Cascade Multipliers:**
 | Asset | EXPANSION | NEUTRAL | CONTRACTION |
 |-------|-----------|---------|-------------|
 | SPX | 1.10 | 1.00 | 0.85 |
 | BTC | 1.20 | 1.00 | 0.75 |
+
+- `mLiquidity` factor added to both cascades
+- Cached with 5-min refresh
+- Shows in cascade explanations
 
 ---
 
 ## Next Steps
 
 ### Immediate
-1. **P2 Validation** — Historical backtest (2020 QE, 2022 QT)
-2. **P2.4 Integration** — Wire into Macro Score, AE Brain, Cascade
+1. **P2.5 Episode Validation** — Historical backtest (2020 QE, 2022 QT)
+2. **D1.1/D2.1 Rerun** — Validate DD improvement with liquidity
 
 ### Backlog
 - P3 — As-Of / Lagged Reality (honest backtest)
