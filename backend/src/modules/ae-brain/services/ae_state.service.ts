@@ -142,6 +142,7 @@ export async function buildAeState(asOf?: string): Promise<AeStateVector> {
 
 /**
  * Convert state vector to array (for KNN)
+ * P2.4.3: Added liquidityImpulse as 7th dimension
  */
 export function stateVectorToArray(v: AeStateVector['vector']): number[] {
   return [
@@ -151,5 +152,6 @@ export function stateVectorToArray(v: AeStateVector['vector']): number[] {
     v.dxySignalSigned,
     v.dxyConfidence,
     v.regimeBias90d,
+    v.liquidityImpulse,  // P2.4.3
   ];
 }
