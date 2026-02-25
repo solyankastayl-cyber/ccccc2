@@ -227,7 +227,9 @@ async function computeMacroScoreInternal(options?: AsOfOptions): Promise<MacroSc
   // Positive impulse (expansion) → negative score (USD bearish)
   // Negative impulse (contraction) → positive score (USD bullish)
   try {
-    const liquidityEngine = await getLiquidityMacroComponent();
+    const liquidityEngine = asOf
+      ? await getLiquidityMacroComponentAsOf(asOf)
+      : await getLiquidityMacroComponent();
     
     if (liquidityEngine.available) {
       const liquidityNormalized = liquidityEngine.scoreSigned * LIQUIDITY_ENGINE_WEIGHT;
