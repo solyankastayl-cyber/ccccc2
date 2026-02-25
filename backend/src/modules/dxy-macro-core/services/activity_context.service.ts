@@ -370,6 +370,228 @@ function buildEmptyContext(seriesId: string, displayName: string): ActivitySerie
 }
 
 // ═══════════════════════════════════════════════════════════════
+// P3.2: AS-OF SERIES CONTEXT
+// ═══════════════════════════════════════════════════════════════
+
+async function buildManempContextAsOf(asOfDate: string): Promise<ActivitySeriesContext> {
+  const seriesId = 'MANEMP';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? 'Manufacturing Employment';
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    const points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const yoy = computeYoY(points, current);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, stats?.std5y ?? 50);
+    const regime = classifyManempRegime(yoy);
+    const pressure = calcManempPressure(yoy);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current), date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m) : null,
+        delta12m: yoy !== null ? Math.round(yoy * 10000) / 10000 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Activity AsOf] Failed to build MANEMP context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+async function buildIndproContextAsOf(asOfDate: string): Promise<ActivitySeriesContext> {
+  const seriesId = 'INDPRO';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? 'Industrial Production';
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    const points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const yoy = computeYoY(points, current);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, stats?.std5y ?? 1);
+    const regime = classifyIndproRegime(yoy);
+    const pressure = calcIndproPressure(yoy);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current * 100) / 100, date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 100) / 100 : null,
+        delta12m: yoy !== null ? Math.round(yoy * 10000) / 10000 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Activity AsOf] Failed to build INDPRO context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+async function buildTcuContextAsOf(asOfDate: string): Promise<ActivitySeriesContext> {
+  const seriesId = 'TCU';
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? 'Capacity Utilization';
+  
+  try {
+    const rawPoints = await getMacroSeriesPoints(seriesId);
+    const points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    const delta3m = computeDelta(points, current, 3);
+    const delta12m = computeDelta(points, current, 12);
+    const stats = compute5YearStats(points, current);
+    
+    const trend = classifyTrend(delta3m, 1);
+    const regime = classifyTcuRegime(current);
+    const pressure = calcTcuPressure(current);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: { value: Math.round(current * 100) / 100, date: currentDate },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 100) / 100 : null,
+        delta12m: delta12m !== null ? Math.round(delta12m * 100) / 100 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+  } catch (error: any) {
+    console.error(`[Activity AsOf] Failed to build TCU context:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+/**
+ * P3.2: Build complete activity context as of a specific date
+ */
+export async function buildActivityContextAsOf(asOfDate: string): Promise<ActivityContext> {
+  const manemp = await buildManempContextAsOf(asOfDate);
+  const indpro = await buildIndproContextAsOf(asOfDate);
+  const tcu = await buildTcuContextAsOf(asOfDate);
+  
+  // Calculate composite score (same logic as current)
+  const pressures = [
+    { weight: WEIGHTS.MANEMP, pressure: manemp.pressure, available: manemp.available },
+    { weight: WEIGHTS.INDPRO, pressure: indpro.pressure, available: indpro.available },
+    { weight: WEIGHTS.TCU, pressure: tcu.pressure, available: tcu.available },
+  ];
+  
+  const available = pressures.filter(p => p.available);
+  const missingCount = 3 - available.length;
+  
+  let scoreSigned = 0;
+  let totalWeight = 0;
+  
+  if (available.length > 0) {
+    for (const p of available) {
+      scoreSigned += p.pressure * p.weight;
+      totalWeight += p.weight;
+    }
+    if (totalWeight > 0) {
+      scoreSigned = scoreSigned / totalWeight;
+    }
+  }
+  
+  scoreSigned = clamp(scoreSigned, -1, 1);
+  
+  // Confidence based on missing series and pressure agreement
+  let confidence: number;
+  if (missingCount >= 2) {
+    confidence = 0.35;
+  } else if (missingCount === 1) {
+    confidence = 0.55;
+  } else {
+    const availablePressures = available.map(p => p.pressure);
+    const pressureStd = stdDev(availablePressures);
+    confidence = clamp(1 - pressureStd, 0.3, 1);
+  }
+  
+  // Determine composite regime
+  let regime: string;
+  const regimes = [manemp.regime, indpro.regime, tcu.regime].filter(r => r !== 'NEUTRAL');
+  const expansionCount = regimes.filter(r => r === 'EXPANSION').length;
+  const contractionCount = regimes.filter(r => r === 'CONTRACTION').length;
+  
+  if (expansionCount > contractionCount) {
+    regime = 'EXPANSION';
+  } else if (contractionCount > expansionCount) {
+    regime = 'CONTRACTION';
+  } else {
+    regime = 'NEUTRAL';
+  }
+  
+  // Build note
+  let note: string;
+  if (regime === 'EXPANSION') {
+    note = 'Economic activity expanding → USD tailwind from growth';
+  } else if (regime === 'CONTRACTION') {
+    note = 'Economic activity contracting → USD headwind from weakness';
+  } else {
+    note = 'Economic activity neutral';
+  }
+  
+  return {
+    manemp,
+    indpro,
+    tcu,
+    composite: {
+      scoreSigned: Math.round(scoreSigned * 1000) / 1000,
+      confidence: Math.round(confidence * 1000) / 1000,
+      regime,
+      note,
+    },
+    computedAt: asOfDate,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BUILD COMPOSITE ACTIVITY CONTEXT
 // ═══════════════════════════════════════════════════════════════
 
@@ -482,8 +704,8 @@ export async function getActivityScoreComponent(): Promise<{
 }
 
 /**
- * P3: Get activity score as of a specific date.
- * TODO: Full as-of implementation with publication lag
+ * P3.2: Get activity score as of a specific date.
+ * Full implementation with publication lag filtering.
  */
 export async function getActivityScoreComponentAsOf(asOfDate: string): Promise<{
   key: string;
@@ -494,6 +716,17 @@ export async function getActivityScoreComponentAsOf(asOfDate: string): Promise<{
   regime: string;
   available: boolean;
 }> {
-  // Stub for P3.1 — full implementation in P3.2
-  return getActivityScoreComponent();
+  const ctx = await buildActivityContextAsOf(asOfDate);
+  
+  const anyAvailable = ctx.manemp.available || ctx.indpro.available || ctx.tcu.available;
+  
+  return {
+    key: 'ACTIVITY',
+    displayName: 'Economic Activity (PMI/Production)',
+    scoreSigned: ctx.composite.scoreSigned,
+    weight: 0.15,
+    confidence: ctx.composite.confidence,
+    regime: ctx.composite.regime,
+    available: anyAvailable,
+  };
 }
