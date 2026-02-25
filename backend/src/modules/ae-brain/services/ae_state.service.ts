@@ -20,7 +20,7 @@ import { getLiquidityForStateVector } from '../../liquidity-engine/liquidity.reg
 
 /**
  * Build AE State Vector
- * Aggregates macro, guard, and DXY terminal into normalized vector
+ * Aggregates macro, guard, DXY terminal, and liquidity into normalized vector
  */
 export async function buildAeState(asOf?: string): Promise<AeStateVector> {
   const missing: string[] = [];
@@ -34,7 +34,11 @@ export async function buildAeState(asOf?: string): Promise<AeStateVector> {
     dxySignalSigned: 0,
     dxyConfidence: 0.5,
     regimeBias90d: 0,
+    liquidityImpulse: 0,  // P2.4.3
   };
+  
+  // P2.4.3: Liquidity details
+  let liquidityDetails: AeStateVector['liquidity'] = undefined;
   
   // 1. Get Macro Score
   try {
@@ -108,6 +112,23 @@ export async function buildAeState(asOf?: string): Promise<AeStateVector> {
     missing.push('dxy_terminal');
   }
   
+  // 4. P2.4.3: Get Liquidity Impulse
+  try {
+    const liquidity = await getLiquidityForStateVector();
+    vector.liquidityImpulse = clamp(safeNumber(liquidity.liquidityImpulse), -1, 1);
+    
+    liquidityDetails = {
+      impulse: liquidity.liquidityImpulse * 3,  // Denormalize to -3..+3
+      regime: liquidity.regime,
+      confidence: liquidity.confidence,
+    };
+    
+    console.log('[AE State] Liquidity impulse:', liquidity.liquidityImpulse, 'regime:', liquidity.regime);
+  } catch (e) {
+    console.warn('[AE State] Liquidity unavailable:', (e as Error).message);
+    missing.push('liquidity');
+  }
+  
   return {
     asOf: today,
     vector,
@@ -115,6 +136,7 @@ export async function buildAeState(asOf?: string): Promise<AeStateVector> {
       ok: missing.length === 0,
       missing,
     },
+    liquidity: liquidityDetails,
   };
 }
 
