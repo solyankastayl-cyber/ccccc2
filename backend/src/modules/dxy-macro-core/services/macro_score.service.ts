@@ -145,7 +145,9 @@ async function computeMacroScoreInternal(options?: AsOfOptions): Promise<MacroSc
   // B4.1: Add housing composite component
   let housingComponent: MacroScoreComponent | null = null;
   try {
-    const housing = await getHousingScoreComponent();
+    const housing = asOf 
+      ? await getHousingScoreComponentAsOf(asOf)
+      : await getHousingScoreComponent();
     
     if (housing.available) {
       const housingNormalized = housing.scoreSigned * HOUSING_COMPOSITE_WEIGHT;
@@ -170,7 +172,9 @@ async function computeMacroScoreInternal(options?: AsOfOptions): Promise<MacroSc
   
   // B4.2: Add activity composite component
   try {
-    const activity = await getActivityScoreComponent();
+    const activity = asOf
+      ? await getActivityScoreComponentAsOf(asOf)
+      : await getActivityScoreComponent();
     
     if (activity.available) {
       const activityNormalized = activity.scoreSigned * ACTIVITY_COMPOSITE_WEIGHT;
@@ -194,7 +198,9 @@ async function computeMacroScoreInternal(options?: AsOfOptions): Promise<MacroSc
   
   // B4.3: Add credit composite component
   try {
-    const credit = await getCreditScoreComponent();
+    const credit = asOf
+      ? await getCreditScoreComponentAsOf(asOf)
+      : await getCreditScoreComponent();
     
     if (credit.available) {
       const creditNormalized = credit.scoreSigned * CREDIT_COMPOSITE_WEIGHT;
