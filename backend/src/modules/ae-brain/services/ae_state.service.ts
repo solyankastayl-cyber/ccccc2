@@ -1,6 +1,7 @@
 /**
  * C1 — State Vector Aggregator Service
  * Builds normalized state vector from DXY terminal + macro + guard
+ * P2.4.3: Added liquidityImpulse axis
  */
 
 import type { AeStateVector } from '../contracts/ae_state.contract.js';
@@ -13,6 +14,9 @@ import { computeCrisisGuard } from '../../dxy-macro-core/services/crisis_guard.s
 
 // Import from dxy terminal (read-only)
 import { buildDxyTerminalPack } from '../../dxy/services/dxy_terminal.service.js';
+
+// P2.4.3: Import from liquidity-engine
+import { getLiquidityForStateVector } from '../../liquidity-engine/liquidity.regime.js';
 
 /**
  * Build AE State Vector
