@@ -93,6 +93,17 @@ const GUARD_MULTIPLIERS: Record<GuardLevel, { confidence: number; size: number; 
   BLOCK:  { confidence: 0.5,  size: 0,   tradingAllowed: false },
 };
 
+// P2.4.2: Liquidity Acceleration Thresholds
+const LIQUIDITY_CRISIS_ACCELERATION = {
+  // Credit threshold for liquidity-triggered CRISIS acceleration
+  creditThreshold: 0.15,  // Lower than standard CRISIS
+  // Impulse must be strongly negative
+  impulseThreshold: -0.50,
+};
+
+// P2.4.2: Extra size reduction for CRISIS + liquidity contraction
+const LIQUIDITY_CRISIS_SIZE_HAIRCUT = 0.85;  // multiply size by 0.85 in CRISIS+CONTRACTION
+
 // ═══════════════════════════════════════════════════════════════
 // HELPER: Get current VIX
 // ═══════════════════════════════════════════════════════════════
