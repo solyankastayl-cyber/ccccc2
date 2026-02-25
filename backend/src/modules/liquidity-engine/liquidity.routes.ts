@@ -224,6 +224,151 @@ export async function registerLiquidityRoutes(app: FastifyInstance): Promise<voi
     }
   });
   
+  // ─────────────────────────────────────────────────────────────
+  // P2.5: Episode Validation — Single episode
+  // ─────────────────────────────────────────────────────────────
+  app.get('/api/liquidity/validate/episode', async (
+    req: FastifyRequest<{ 
+      Querystring: { 
+        from?: string;
+        to?: string;
+        expectedRegime?: string;
+        stepDays?: string;
+        thresholdShare?: string;
+      } 
+    }>,
+    reply: FastifyReply
+  ) => {
+    try {
+      const { from, to, expectedRegime, stepDays, thresholdShare } = req.query;
+      
+      if (!from || !to || !expectedRegime) {
+        return reply.status(400).send({
+          ok: false,
+          error: 'Required: from, to, expectedRegime',
+          example: '/api/liquidity/validate/episode?from=2020-03-01&to=2021-03-01&expectedRegime=EXPANSION',
+        });
+      }
+      
+      const input: EpisodeValidationInput = {
+        from,
+        to,
+        expectedRegime: expectedRegime as any,
+        stepDays: stepDays ? parseInt(stepDays) : 7,
+        thresholdShare: thresholdShare ? parseFloat(thresholdShare) : 0.60,
+      };
+      
+      const result = await validateEpisode(input);
+      
+      // Return without full snapshots for cleaner response
+      return reply.send({
+        ...result,
+        snapshots: `${result.snapshots.length} weekly snapshots (use /api/liquidity/validate/episode/detail for full data)`,
+      });
+      
+    } catch (error: any) {
+      return reply.status(500).send({
+        ok: false,
+        error: error.message,
+      });
+    }
+  });
+  
+  // ─────────────────────────────────────────────────────────────
+  // P2.5: Episode Validation — Single episode with full snapshots
+  // ─────────────────────────────────────────────────────────────
+  app.get('/api/liquidity/validate/episode/detail', async (
+    req: FastifyRequest<{ 
+      Querystring: { 
+        from?: string;
+        to?: string;
+        expectedRegime?: string;
+        stepDays?: string;
+        thresholdShare?: string;
+      } 
+    }>,
+    reply: FastifyReply
+  ) => {
+    try {
+      const { from, to, expectedRegime, stepDays, thresholdShare } = req.query;
+      
+      if (!from || !to || !expectedRegime) {
+        return reply.status(400).send({
+          ok: false,
+          error: 'Required: from, to, expectedRegime',
+        });
+      }
+      
+      const input: EpisodeValidationInput = {
+        from,
+        to,
+        expectedRegime: expectedRegime as any,
+        stepDays: stepDays ? parseInt(stepDays) : 7,
+        thresholdShare: thresholdShare ? parseFloat(thresholdShare) : 0.60,
+      };
+      
+      const result = await validateEpisode(input);
+      return reply.send(result);
+      
+    } catch (error: any) {
+      return reply.status(500).send({
+        ok: false,
+        error: error.message,
+      });
+    }
+  });
+  
+  // ─────────────────────────────────────────────────────────────
+  // P2.5: Run all predefined episode validations
+  // ─────────────────────────────────────────────────────────────
+  app.get('/api/liquidity/validate/episodes', async (
+    req: FastifyRequest,
+    reply: FastifyReply
+  ) => {
+    try {
+      const result = await validateAllEpisodes();
+      
+      // Summarize without full snapshots
+      const summary: Record<string, any> = {};
+      for (const [key, res] of Object.entries(result.results)) {
+        const episode = PREDEFINED_EPISODES[key as keyof typeof PREDEFINED_EPISODES];
+        summary[key] = {
+          name: episode.name,
+          description: episode.description,
+          result: res.result,
+          stats: res.stats,
+          passReasons: res.passReasons,
+          failReasons: res.failReasons,
+        };
+      }
+      
+      return reply.send({
+        ok: result.ok,
+        passCount: result.passCount,
+        failCount: result.failCount,
+        episodes: summary,
+      });
+      
+    } catch (error: any) {
+      return reply.status(500).send({
+        ok: false,
+        error: error.message,
+      });
+    }
+  });
+  
+  // ─────────────────────────────────────────────────────────────
+  // P2.5: List predefined episodes
+  // ─────────────────────────────────────────────────────────────
+  app.get('/api/liquidity/validate/episodes/list', async (
+    req: FastifyRequest,
+    reply: FastifyReply
+  ) => {
+    return reply.send({
+      episodes: PREDEFINED_EPISODES,
+    });
+  });
+  
   console.log('[Liquidity Engine] Routes registered:');
   console.log('  POST /api/liquidity/admin/ingest');
   console.log('  GET  /api/liquidity/health');
@@ -234,4 +379,8 @@ export async function registerLiquidityRoutes(app: FastifyInstance): Promise<voi
   console.log('  GET  /api/liquidity/cascade/spx');
   console.log('  GET  /api/liquidity/cascade/btc');
   console.log('  GET  /api/liquidity/crisis-check');
+  console.log('  GET  /api/liquidity/validate/episode');
+  console.log('  GET  /api/liquidity/validate/episode/detail');
+  console.log('  GET  /api/liquidity/validate/episodes');
+  console.log('  GET  /api/liquidity/validate/episodes/list');
 }
