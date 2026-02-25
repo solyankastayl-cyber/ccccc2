@@ -15,7 +15,7 @@ import {
   LiquidityRegime,
   LiquidityContext,
 } from './liquidity.contract.js';
-import { buildLiquidityContext, getLiquidityState } from './liquidity.impulse.js';
+import { buildLiquidityContext, getLiquidityState, buildLiquidityContextAsOf } from './liquidity.impulse.js';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
