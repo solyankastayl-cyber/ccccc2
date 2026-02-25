@@ -112,11 +112,22 @@ export async function registerLiquidityRoutes(app: FastifyInstance): Promise<voi
   
   // ─────────────────────────────────────────────────────────────
   // Full context (all series + state)
+  // P3: Supports ?asOf= parameter
   // ─────────────────────────────────────────────────────────────
-  app.get('/api/liquidity/context', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/liquidity/context', async (
+    req: FastifyRequest<{ Querystring: { asOf?: string } }>,
+    reply: FastifyReply
+  ) => {
     try {
+      const { asOf } = req.query;
+      
+      if (asOf) {
+        const context = await buildLiquidityContextAsOf(asOf);
+        return reply.send({ ...context, mode: 'as-of', asOf });
+      }
+      
       const context = await buildLiquidityContext();
-      return reply.send(context);
+      return reply.send({ ...context, mode: 'current' });
       
     } catch (error: any) {
       return reply.status(500).send({
@@ -128,11 +139,22 @@ export async function registerLiquidityRoutes(app: FastifyInstance): Promise<voi
   
   // ─────────────────────────────────────────────────────────────
   // Current impulse state
+  // P3: Supports ?asOf= parameter
   // ─────────────────────────────────────────────────────────────
-  app.get('/api/liquidity/state', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/liquidity/state', async (
+    req: FastifyRequest<{ Querystring: { asOf?: string } }>,
+    reply: FastifyReply
+  ) => {
     try {
+      const { asOf } = req.query;
+      
+      if (asOf) {
+        const state = await getLiquidityStateAsOf(asOf);
+        return reply.send({ ...state, mode: 'as-of', asOf });
+      }
+      
       const state = await getLiquidityState();
-      return reply.send(state);
+      return reply.send({ ...state, mode: 'current' });
       
     } catch (error: any) {
       return reply.status(500).send({
