@@ -495,3 +495,21 @@ export async function getHousingScoreComponent(): Promise<{
     available: anyAvailable,
   };
 }
+
+/**
+ * P3: Get housing score as of a specific date.
+ * TODO: Full as-of implementation with publication lag
+ */
+export async function getHousingScoreComponentAsOf(asOfDate: string): Promise<{
+  key: string;
+  displayName: string;
+  scoreSigned: number;
+  weight: number;
+  confidence: number;
+  regime: string;
+  available: boolean;
+}> {
+  // For now, use current data (as-of filtering to be added)
+  // This is a stub for P3.1 — full implementation in P3.2
+  return getHousingScoreComponent();
+}
