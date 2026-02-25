@@ -219,10 +219,24 @@ export async function validateEpisode(
   const rrpWeekly = normalizeToWeekly(rrpPoints, LIQUIDITY_SERIES.RRPONTSYD.frequency);
   const tgaWeekly = normalizeToWeekly(tgaPoints, LIQUIDITY_SERIES.WTREGEN.frequency);
   
-  // Build week-indexed maps
-  const walclByWeek = new Map(walclWeekly.map((w, i) => [w.weekEnd, i]));
-  const rrpByWeek = new Map(rrpWeekly.map((w, i) => [w.weekEnd, i]));
-  const tgaByWeek = new Map(tgaWeekly.map((w, i) => [w.weekEnd, i]));
+  console.log(`[Liquidity Validate] WALCL: ${walclWeekly.length} weeks, RRP: ${rrpWeekly.length} weeks, TGA: ${tgaWeekly.length} weeks`);
+  
+  // Helper: find nearest week index (within 7 days)
+  function findNearestWeekIdx(weekly: WeeklyPoint[], targetDate: string): number | null {
+    const target = new Date(targetDate).getTime();
+    let bestIdx: number | null = null;
+    let bestDiff = Infinity;
+    
+    for (let i = 0; i < weekly.length; i++) {
+      const diff = Math.abs(new Date(weekly[i].weekEnd).getTime() - target);
+      if (diff < bestDiff && diff <= 7 * 24 * 60 * 60 * 1000) {  // within 7 days
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    
+    return bestIdx;
+  }
   
   // Generate dates to check
   const startDate = new Date(from);
