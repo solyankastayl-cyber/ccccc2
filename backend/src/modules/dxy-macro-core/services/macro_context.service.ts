@@ -441,7 +441,7 @@ export async function buildMacroContextAsOf(
   const pct = percentile(recentValues, currentValue);
   
   // Trend
-  const trend = computeTrend(allPoints, spec.primaryTransform);
+  const trend = classifyTrend(delta3m, delta12m);
   
   // Regime
   const regime = classifyRegime(spec.role, currentValue, yoy, delta3m, delta12m);
