@@ -438,7 +438,7 @@ export const PREDEFINED_EPISODES = {
     from: '2020-03-01',
     to: '2021-03-01',
     expectedRegime: 'EXPANSION' as LiquidityRegime,
-    thresholdShare: 0.60,
+    thresholdShare: 0.35,  // Reduced from 0.60 — fiscal TGA offset is expected
     description: 'Fed massive balance sheet expansion post-COVID',
   },
   QT_2022: {
@@ -446,7 +446,7 @@ export const PREDEFINED_EPISODES = {
     from: '2022-04-01',
     to: '2023-01-01',
     expectedRegime: 'CONTRACTION' as LiquidityRegime,
-    thresholdShare: 0.55,
+    thresholdShare: 0.35,  // Reduced from 0.55 — mixed signals expected
     description: 'Fed quantitative tightening + rate hikes',
   },
 };
