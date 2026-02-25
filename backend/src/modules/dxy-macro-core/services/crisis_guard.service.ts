@@ -232,6 +232,7 @@ function getGuardOutput(level: GuardLevel): GuardOutput {
 
 /**
  * Compute crisis guard for current state
+ * P2.4.2: Now includes liquidity acceleration
  */
 export async function computeCrisisGuard(
   macroScoreSigned: number,
@@ -244,12 +245,54 @@ export async function computeCrisisGuard(
   // Get current VIX
   const vix = await getCurrentVix();
   
+  // P2.4.2: Get liquidity state
+  let liquidityInfo: { impulse: number; regime: string; accelerated: boolean } | undefined;
+  let liquidityAccelerated = false;
+  
+  try {
+    const liquidityState = await getLiquidityState();
+    liquidityInfo = {
+      impulse: liquidityState.impulse,
+      regime: liquidityState.regime,
+      accelerated: false,
+    };
+    
+    // P2.4.2: Check liquidity acceleration condition
+    // If liquidity CONTRACTION + credit stress → accelerate to CRISIS
+    if (
+      liquidityState.regime === 'CONTRACTION' &&
+      liquidityState.impulse < LIQUIDITY_CRISIS_ACCELERATION.impulseThreshold &&
+      creditComposite > LIQUIDITY_CRISIS_ACCELERATION.creditThreshold
+    ) {
+      liquidityAccelerated = true;
+      liquidityInfo.accelerated = true;
+      console.log('[Crisis Guard] Liquidity acceleration triggered: CONTRACTION + credit stress');
+    }
+  } catch (e) {
+    console.warn('[Crisis Guard] Liquidity unavailable:', (e as Error).message);
+  }
+  
   // Classify guard level using B6 2-Stage logic
-  const level = classifyGuardLevel(creditComposite, vix, macroScoreSigned);
+  let level = classifyGuardLevel(creditComposite, vix, macroScoreSigned);
+  
+  // P2.4.2: Apply liquidity acceleration
+  // If standard level is NONE or WARN, but liquidity acceleration triggered → upgrade to CRISIS
+  if (liquidityAccelerated && (level === 'NONE' || level === 'WARN')) {
+    level = 'CRISIS';
+    console.log('[Crisis Guard] Level upgraded to CRISIS due to liquidity contraction');
+  }
+  
   const triggered = level !== 'NONE';
   
   // Get guard output with final multiplier
   const overlay = mapModeToOverlay(level, baseOverlayMultiplier);
+  
+  // P2.4.2: Extra haircut for CRISIS + CONTRACTION
+  let adjustedSizeMultiplier = overlay.sizeMultiplier;
+  if (level === 'CRISIS' && liquidityInfo?.regime === 'CONTRACTION') {
+    adjustedSizeMultiplier = overlay.sizeMultiplier * LIQUIDITY_CRISIS_SIZE_HAIRCUT;
+    console.log(`[Crisis Guard] Size haircut applied: ${overlay.sizeMultiplier} → ${adjustedSizeMultiplier}`);
+  }
   
   return {
     stress: {
@@ -258,10 +301,11 @@ export async function computeCrisisGuard(
       macroScoreSigned: Math.round(macroScoreSigned * 1000) / 1000,
       triggered,
       level,
+      liquidity: liquidityInfo,
     },
     guard: {
       confidenceMultiplier: Math.round(overlay.confidenceMultiplier * 1000) / 1000,
-      sizeMultiplier: overlay.sizeMultiplier,
+      sizeMultiplier: Math.round(adjustedSizeMultiplier * 1000) / 1000,
       tradingAllowed: overlay.tradingAllowed,
       level,
     },
