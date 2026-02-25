@@ -9,9 +9,9 @@
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
-import { fetchFredSeries, FredDataPoint, hasFredApiKey } from '../../dxy-macro-core/ingest/fred.client.js';
-import { MacroPointModel } from '../../dxy-macro-core/storage/macro_points.model.js';
-import { MacroSeriesMetaModel } from '../../dxy-macro-core/storage/macro_series_meta.model.js';
+import { fetchFredSeries, FredDataPoint, hasFredApiKey } from '../dxy-macro-core/ingest/fred.client.js';
+import { MacroPointModel } from '../dxy-macro-core/storage/macro_points.model.js';
+import { MacroSeriesMetaModel } from '../dxy-macro-core/storage/macro_series_meta.model.js';
 import {
   LIQUIDITY_SERIES,
   LiquiditySeriesId,
