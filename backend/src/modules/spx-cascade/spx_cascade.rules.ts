@@ -1,5 +1,5 @@
 /**
- * SPX CASCADE RULES — D1 Extended
+ * SPX CASCADE RULES — D1 Extended + P2.4.4 Liquidity
  * 
  * Pure functions for cascade logic.
  * All calculations are deterministic.
@@ -8,6 +8,8 @@
  * - Cascade NEVER changes SPX direction
  * - Only scales size, confidence, threshold
  * - Guard always applied last
+ * 
+ * P2.4.4: Added liquidity regime multiplier
  */
 
 import type {
@@ -18,6 +20,9 @@ import type {
   RiskModeType,
   GuardActionType,
 } from './spx_cascade.contract.js';
+
+// P2.4.4: Import liquidity multiplier
+import { getSpxLiquidityMultiplier } from '../liquidity-engine/liquidity.regime.js';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
