@@ -7,7 +7,7 @@
         "endpoint": "All /api/* routes",
         "issue": "Public URL returns 404 for all API endpoints",
         "working_url": "http://localhost:8001",
-        "failing_url": "https://fractal-fix.preview.emergentagent.com",
+        "failing_url": "https://pointintime-macro.preview.emergentagent.com",
         "impact": "Users cannot access API through public URL",
         "fix_priority": "MEDIUM"
       }
@@ -54,7 +54,7 @@
   },
   
   "action_item_for_main_agent": {
-    "public_url_routing": "Investigate and fix public URL routing - all /api/* endpoints return 404 on https://fractal-fix.preview.emergentagent.com",
+    "public_url_routing": "Investigate and fix public URL routing - all /api/* endpoints return 404 on https://pointintime-macro.preview.emergentagent.com",
     "frontend_service": "Fix frontend service FATAL status if frontend access is needed (currently not required for backend-only testing)"
   },
   

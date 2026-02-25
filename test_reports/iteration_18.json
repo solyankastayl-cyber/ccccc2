@@ -7,7 +7,7 @@
     "routing_issues": [
       {
         "endpoint": "AE Brain endpoints on external URL", 
-        "issue": "External URL (https://fractal-fix.preview.emergentagent.com/api/ae/*) returns 404",
+        "issue": "External URL (https://pointintime-macro.preview.emergentagent.com/api/ae/*) returns 404",
         "impact": "External access not available, but localhost:8001 works perfectly",
         "fix_priority": "LOW",
         "workaround": "All AE Brain functionality accessible on localhost:8001, backend running in FRACTAL_ONLY mode"

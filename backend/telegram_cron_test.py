@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class TelegramCronTester:
-    def __init__(self, base_url: str = "https://fractal-fix.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://pointintime-macro.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
@@ -527,7 +527,7 @@ class TelegramCronTester:
 
 def main():
     # Use the frontend .env REACT_APP_BACKEND_URL for testing
-    base_url = "https://fractal-fix.preview.emergentagent.com"
+    base_url = "https://pointintime-macro.preview.emergentagent.com"
     
     tester = TelegramCronTester(base_url)
     exit_code = tester.run_all_tests()

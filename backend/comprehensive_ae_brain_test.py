@@ -13,7 +13,7 @@ from datetime import datetime
 class ComprehensiveAeBrainTester:
     def __init__(self):
         self.local_url = "http://localhost:8001"
-        self.public_url = "https://fractal-fix.preview.emergentagent.com"
+        self.public_url = "https://pointintime-macro.preview.emergentagent.com"
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []

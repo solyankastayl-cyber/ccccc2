@@ -7,7 +7,7 @@
         "endpoint": "All SPX Cascade /api/fractal/spx/* routes",
         "issue": "Public URL returns 404 for all API endpoints", 
         "working_url": "http://127.0.0.1:8002",
-        "failing_url": "https://fractal-fix.preview.emergentagent.com",
+        "failing_url": "https://pointintime-macro.preview.emergentagent.com",
         "impact": "Users cannot access SPX Cascade API through public URL",
         "fix_priority": "MEDIUM"
       }
@@ -53,7 +53,7 @@
   },
   
   "action_item_for_main_agent": {
-    "public_url_routing": "Investigate and fix public URL routing for SPX Cascade endpoints - all /api/fractal/spx/* return 404 on https://fractal-fix.preview.emergentagent.com but work on localhost:8002",
+    "public_url_routing": "Investigate and fix public URL routing for SPX Cascade endpoints - all /api/fractal/spx/* return 404 on https://pointintime-macro.preview.emergentagent.com but work on localhost:8002",
     "port_configuration": "Backend is running on port 8002 instead of expected port 8001 - verify port configuration and ingress rules",
     "frontend_service": "Fix frontend service FATAL status if frontend access is needed (currently not required for backend-only testing)"
   },

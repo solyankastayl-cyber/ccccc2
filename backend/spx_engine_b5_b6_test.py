@@ -11,7 +11,7 @@ NEW ENDPOINTS BEING TESTED:
 - GET /api/spx/v2.1/admin/memory/snapshots - List snapshots
 - GET /api/spx/v2.1/focus-pack?focus=30d - Existing endpoint compatibility check
 
-Backend URL: https://fractal-fix.preview.emergentagent.com
+Backend URL: https://pointintime-macro.preview.emergentagent.com
 """
 
 import requests
@@ -21,7 +21,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from environment (use actual configured URL)
-BASE_URL = 'https://fractal-fix.preview.emergentagent.com'
+BASE_URL = 'https://pointintime-macro.preview.emergentagent.com'
 
 class SpxEngineB5B6Tester:
     def __init__(self):

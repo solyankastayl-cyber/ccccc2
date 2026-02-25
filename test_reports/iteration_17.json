@@ -7,7 +7,7 @@
     "routing_issues": [
       {
         "endpoint": "External URL routing",
-        "issue": "External URL (https://fractal-fix.preview.emergentagent.com) returns 404 for API endpoints",
+        "issue": "External URL (https://pointintime-macro.preview.emergentagent.com) returns 404 for API endpoints",
         "impact": "External access not working, but localhost:8001 works perfectly",
         "fix_priority": "LOW",
         "workaround": "Backend is fully functional on localhost:8001"
@@ -45,7 +45,7 @@
     "frontend": "Not required (backend-only testing)"
   },
 
-  "action_item_for_main_agent": "External URL routing issue: API endpoints return 404 on https://fractal-fix.preview.emergentagent.com but work perfectly on localhost:8001. This is a deployment/ingress configuration issue, not a backend functionality issue. All B6 2-Stage Guard acceptance criteria are met.",
+  "action_item_for_main_agent": "External URL routing issue: API endpoints return 404 on https://pointintime-macro.preview.emergentagent.com but work perfectly on localhost:8001. This is a deployment/ingress configuration issue, not a backend functionality issue. All B6 2-Stage Guard acceptance criteria are met.",
 
   "updated_files": [
     "/app/backend/backend_test.py"

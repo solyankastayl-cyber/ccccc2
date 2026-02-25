@@ -5,7 +5,7 @@
     "critical_bugs": [],
     "connectivity_issues": [
       {
-        "endpoint": "Production server (https://fractal-fix.preview.emergentagent.com)",
+        "endpoint": "Production server (https://pointintime-macro.preview.emergentagent.com)",
         "issue": "Returns 520 errors - server unreachable", 
         "impact": "Frontend cannot connect to configured backend URL",
         "fix_priority": "CRITICAL",
@@ -51,7 +51,7 @@
 
   "updated_files": ["/app/backend/backend_test.py"],
 
-  "action_item_for_main_agent": "CRITICAL: Configure frontend to use local backend (localhost:8002) instead of production URL, or fix production server connectivity. Production backend URL (https://fractal-fix.preview.emergentagent.com) returns 520 errors and is unreachable, while local backend on localhost:8002 is fully functional with all required APIs working.",
+  "action_item_for_main_agent": "CRITICAL: Configure frontend to use local backend (localhost:8002) instead of production URL, or fix production server connectivity. Production backend URL (https://pointintime-macro.preview.emergentagent.com) returns 520 errors and is unreachable, while local backend on localhost:8002 is fully functional with all required APIs working.",
 
   "should_call_test_agent_after_fix": "true",
   "should_main_agent_test_itself": "false"

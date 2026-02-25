@@ -5,7 +5,7 @@
     "critical_bugs": [],
     "connectivity_issues": [
       {
-        "endpoint": "Production backend (https://fractal-fix.preview.emergentagent.com)",
+        "endpoint": "Production backend (https://pointintime-macro.preview.emergentagent.com)",
         "issue": "Returns 520 errors - server unreachable",
         "impact": "Frontend components cannot load data from configured backend URL",
         "fix_priority": "CRITICAL",
@@ -60,7 +60,7 @@
     "/app/backend/forward_performance_test.py"
   ],
 
-  "action_item_for_main_agent": "CRITICAL: The Forward Performance feature is fully implemented and working. Backend APIs are 100% functional with snapshot generation and all preset calculations working correctly. The only issue is frontend connectivity - need to either fix production backend URL (https://fractal-fix.preview.emergentagent.com) which returns 520 errors, or configure frontend to use working local backend (localhost:8002). All Forward Performance requirements are met: ✅ Snapshot generation ✅ Different preset calculations ✅ Forward Performance chart display (when data loads) ✅ Mode switching affects calculations ✅ Global settings integration.",
+  "action_item_for_main_agent": "CRITICAL: The Forward Performance feature is fully implemented and working. Backend APIs are 100% functional with snapshot generation and all preset calculations working correctly. The only issue is frontend connectivity - need to either fix production backend URL (https://pointintime-macro.preview.emergentagent.com) which returns 520 errors, or configure frontend to use working local backend (localhost:8002). All Forward Performance requirements are met: ✅ Snapshot generation ✅ Different preset calculations ✅ Forward Performance chart display (when data loads) ✅ Mode switching affects calculations ✅ Global settings integration.",
 
   "should_call_test_agent_after_fix": "false",
   "should_main_agent_test_itself": "true"

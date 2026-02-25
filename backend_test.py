@@ -21,7 +21,7 @@ from typing import Dict, Any, List, Optional
 import time
 
 class BtcCascadeAPITester:
-    def __init__(self, base_url="https://fractal-fix.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pointintime-macro.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0

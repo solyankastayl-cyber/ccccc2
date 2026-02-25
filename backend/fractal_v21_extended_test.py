@@ -9,7 +9,7 @@ import time
 import json
 
 class ExtendedFractalTester:
-    def __init__(self, base_url="https://fractal-fix.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pointintime-macro.preview.emergentagent.com"):
         self.base_url = base_url
         self.model_key = "BTCUSD:14"
         self.preset_key = "v2_entropy_final"

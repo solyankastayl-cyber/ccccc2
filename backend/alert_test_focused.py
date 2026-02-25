@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class AlertAPITester:
-    def __init__(self, base_url: str = "https://fractal-fix.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://pointintime-macro.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
@@ -361,7 +361,7 @@ class AlertAPITester:
 def main():
     """Main test execution"""
     print("🔧 Alert Engine Testing Suite - BLOCK 67-68")
-    print(f"Testing backend at: https://fractal-fix.preview.emergentagent.com")
+    print(f"Testing backend at: https://pointintime-macro.preview.emergentagent.com")
     print(f"Test started at: {datetime.now().isoformat()}")
     print()
     
