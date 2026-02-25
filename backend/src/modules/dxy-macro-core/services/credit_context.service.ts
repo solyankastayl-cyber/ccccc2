@@ -492,3 +492,20 @@ export async function getCreditScoreComponent(): Promise<{
     available: anyAvailable,
   };
 }
+
+/**
+ * P3: Get credit score as of a specific date.
+ * TODO: Full as-of implementation with publication lag
+ */
+export async function getCreditScoreComponentAsOf(asOfDate: string): Promise<{
+  key: string;
+  displayName: string;
+  scoreSigned: number;
+  weight: number;
+  confidence: number;
+  regime: string;
+  available: boolean;
+}> {
+  // Stub for P3.1 — full implementation in P3.2
+  return getCreditScoreComponent();
+}
