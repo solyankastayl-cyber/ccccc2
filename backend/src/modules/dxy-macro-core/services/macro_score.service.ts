@@ -1,10 +1,11 @@
 /**
- * MACRO SCORE SERVICE — B1 + B4.1 (Housing) + B4.2 (Activity) + B4.3 (Credit)
+ * MACRO SCORE SERVICE — B1 + B4.1 (Housing) + B4.2 (Activity) + B4.3 (Credit) + P2.4 (Liquidity)
  * 
  * Computes composite macro score from all series.
  * B4.1: Housing component (MORTGAGE30US, HOUST, PERMIT, CSUSHPISA)
  * B4.2: Activity component (NAPM, INDPRO, TCU)
  * B4.3: Credit component (BAA10Y, BAMLH0A0HYM2, STLFSI4)
+ * P2.4: Liquidity component (WALCL, RRP, TGA) — Fed liquidity impulse
  * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
@@ -13,6 +14,7 @@ import { buildAllMacroContexts, buildMacroContext } from './macro_context.servic
 import { getHousingScoreComponent } from './housing_context.service.js';
 import { getActivityScoreComponent } from './activity_context.service.js';
 import { getCreditScoreComponent } from './credit_context.service.js';
+import { getLiquidityMacroComponent } from '../../liquidity-engine/liquidity.regime.js';
 import { getEnabledMacroSeries, MacroRole } from '../data/macro_sources.registry.js';
 import {
   MacroScore,
