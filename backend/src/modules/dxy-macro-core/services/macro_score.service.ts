@@ -74,8 +74,40 @@ const EXCLUDED_SERIES = [...HOUSING_SERIES, ...ACTIVITY_SERIES, ...CREDIT_SERIES
 // COMPUTE COMPOSITE SCORE
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * Compute macro score for current date (no lag).
+ * For backtesting, use computeMacroScoreAsOf().
+ */
 export async function computeMacroScore(): Promise<MacroScore> {
-  const allContexts = await buildAllMacroContexts();
+  return computeMacroScoreInternal();
+}
+
+/**
+ * P3: Compute macro score as of a specific date.
+ * Only uses data that would have been available at that date.
+ * 
+ * @param asOf The date to evaluate as of (YYYY-MM-DD)
+ */
+export async function computeMacroScoreAsOf(asOf: string): Promise<MacroScore & { asOf: string }> {
+  const score = await computeMacroScoreInternal({ asOf, applyLag: true });
+  return { ...score, asOf };
+}
+
+/**
+ * Internal implementation supporting both modes
+ */
+async function computeMacroScoreInternal(options?: AsOfOptions): Promise<MacroScore> {
+  const asOf = options?.asOf;
+  const applyLag = options?.applyLag ?? false;
+  
+  // Get contexts (with or without as-of filtering)
+  let allContexts: MacroContext[];
+  if (asOf && applyLag) {
+    // P3: Get contexts filtered by publication lag
+    allContexts = await buildAllMacroContextsAsOf(asOf);
+  } else {
+    allContexts = await buildAllMacroContexts();
+  }
   
   // Filter out series handled via composites
   const contexts = allContexts.filter(c => !EXCLUDED_SERIES.includes(c.seriesId));
