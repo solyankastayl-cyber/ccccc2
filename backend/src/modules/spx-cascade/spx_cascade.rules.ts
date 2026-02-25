@@ -363,6 +363,7 @@ export function computeMultipliers(
 
 /**
  * Generate explanation.
+ * P2.4.4: Added liquidity driver
  */
 export function generateExplain(
   inputs: CascadeInputs,
@@ -400,6 +401,12 @@ export function generateExplain(
     drivers.push(`Bear scenario dominant (${(inputs.ae.scenarios.bear * 100).toFixed(0)}%)`);
   }
   
+  // P2.4.4: Liquidity driver
+  const liquidityInfo = getCachedLiquidityMultiplier();
+  if (liquidityInfo.regime !== 'NEUTRAL') {
+    drivers.push(`Fed Liquidity = ${liquidityInfo.regime} (×${liquidityInfo.value.toFixed(2)})`);
+  }
+  
   // Headline
   let headline = 'Normal conditions → standard SPX exposure';
   
@@ -409,8 +416,12 @@ export function generateExplain(
     headline = 'CRISIS guard → SPX exposure capped at 40%';
   } else if (isStress) {
     headline = 'Stress regime detected → SPX exposure reduced';
+  } else if (liquidityInfo.regime === 'CONTRACTION') {
+    headline = 'Liquidity contraction → SPX exposure reduced';
   } else if (overlay.agreement === 'CONFLICT') {
     headline = 'Macro/SPX conflict → reduced confidence';
+  } else if (liquidityInfo.regime === 'EXPANSION' && multipliers.sizeMultiplier > 0.9) {
+    headline = 'Liquidity expansion → SPX exposure boosted';
   } else if (multipliers.sizeMultiplier > 0.9) {
     headline = 'Favorable conditions → full SPX exposure';
   }
