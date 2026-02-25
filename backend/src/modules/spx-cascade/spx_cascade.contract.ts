@@ -80,7 +80,7 @@ export interface CascadeOverlay {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CASCADE MULTIPLIERS
+// CASCADE MULTIPLIERS — P2.4.4 Updated
 // ═══════════════════════════════════════════════════════════════
 
 export interface CascadeMultipliers {
@@ -96,6 +96,7 @@ export interface CascadeMultipliers {
     mPersist: number;
     mNovel: number;
     mScenario: number;
+    mLiquidity: number;  // P2.4.4: Fed liquidity multiplier (0.85..1.10)
     guardCap: number;
   };
 }
