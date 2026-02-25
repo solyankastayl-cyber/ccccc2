@@ -368,6 +368,86 @@ function buildEmptyContext(seriesId: string, displayName: string): HousingSeries
 }
 
 // ═══════════════════════════════════════════════════════════════
+// P3.2: AS-OF SERIES CONTEXT
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * P3.2: Build series context as of a specific date
+ */
+async function buildSeriesContextAsOf(
+  seriesId: string,
+  asOfDate: string,
+  calcPressure: (z5y: number | null) => number,
+  classifyRegime: (delta: number | null) => string,
+  regimeDeltaType: '3m' | '12m' = '12m'
+): Promise<HousingSeriesContext> {
+  const spec = getMacroSeriesSpec(seriesId);
+  const displayName = spec?.displayName ?? seriesId;
+  
+  try {
+    // Get all points
+    let rawPoints = await getMacroSeriesPoints(seriesId);
+    
+    // P3.2: Filter by publication lag
+    let points = filterByAsOf(rawPoints, asOfDate, seriesId);
+    
+    if (points.length === 0) {
+      return buildEmptyContext(seriesId, displayName);
+    }
+    
+    // Convert weekly to monthly if needed
+    if (spec?.frequency === 'weekly') {
+      points = toMonthlyAverage(points);
+    }
+    
+    // Get current value (latest available)
+    const latestPoint = points[points.length - 1];
+    const current = latestPoint.value;
+    const currentDate = latestPoint.date;
+    
+    // Compute deltas
+    const delta3m = computeDelta(points, current, 3);
+    const delta12m = computeYoY(points, current);
+    
+    // Compute 5y stats
+    const stats = compute5YearStats(points, current);
+    const z5y = stats?.z5y ?? null;
+    
+    // Classify trend
+    const trend = classifyTrend(delta3m, stats?.std5y ?? 0);
+    
+    // Classify regime (use appropriate delta)
+    const regimeDelta = regimeDeltaType === '3m' ? delta3m : delta12m;
+    const regime = classifyRegime(regimeDelta);
+    
+    // Calculate pressure
+    const pressure = calcPressure(z5y);
+    
+    return {
+      seriesId,
+      displayName,
+      available: true,
+      current: {
+        value: Math.round(current * 1000) / 1000,
+        date: currentDate,
+      },
+      deltas: {
+        delta3m: delta3m !== null ? Math.round(delta3m * 10000) / 10000 : null,
+        delta12m: delta12m !== null ? Math.round(delta12m * 10000) / 10000 : null,
+      },
+      stats,
+      trend,
+      regime,
+      pressure: Math.round(pressure * 1000) / 1000,
+    };
+    
+  } catch (error: any) {
+    console.error(`[Housing AsOf] Failed to build context for ${seriesId}:`, error.message);
+    return buildEmptyContext(seriesId, displayName);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BUILD COMPOSITE HOUSING CONTEXT
 // ═══════════════════════════════════════════════════════════════
 
