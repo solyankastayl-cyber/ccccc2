@@ -1,5 +1,5 @@
 /**
- * BTC CASCADE RULES — D2
+ * BTC CASCADE RULES — D2 + P2.4.4 Liquidity
  * 
  * Pure functions for BTC cascade logic.
  * All calculations are deterministic.
@@ -9,6 +9,8 @@
  * - Only scales size and confidence
  * - Guard always applied last
  * - BTC has tighter caps than SPX (more volatile)
+ * 
+ * P2.4.4: Added liquidity regime multiplier (stronger effect than SPX)
  */
 
 import type {
@@ -17,6 +19,9 @@ import type {
   BtcCascadeInputs,
   BtcCascadeMultipliers,
 } from './btc_cascade.contract.js';
+
+// P2.4.4: Import liquidity multiplier
+import { getBtcLiquidityMultiplier } from '../liquidity-engine/liquidity.regime.js';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS — BTC-specific (tighter than SPX)
