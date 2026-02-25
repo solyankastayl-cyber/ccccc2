@@ -128,12 +128,33 @@ export async function registerMacroRoutes(fastify: FastifyInstance): Promise<voi
   // GET /score — Get composite macro score
   // ─────────────────────────────────────────────────────────────
   
-  fastify.get(`${prefix}/score`, async (req, reply) => {
-    const score = await computeMacroScore();
+  fastify.get(`${prefix}/score`, async (
+    req: FastifyRequest<{ Querystring: { asOf?: string } }>,
+    reply: FastifyReply
+  ) => {
+    const { asOf } = req.query;
     
+    if (asOf) {
+      // P3: As-of mode
+      const score = await computeMacroScoreAsOf(asOf);
+      return { ok: true, score, mode: 'as-of' };
+    }
+    
+    const score = await computeMacroScore();
+    return { ok: true, score, mode: 'current' };
+  });
+  
+  // ─────────────────────────────────────────────────────────────
+  // P3: GET /lag-profiles — List publication lag profiles
+  // ─────────────────────────────────────────────────────────────
+  
+  fastify.get(`${prefix}/lag-profiles`, async (req, reply) => {
+    const profiles = getAllLagProfiles();
     return {
       ok: true,
-      score,
+      count: profiles.length,
+      profiles,
+      note: 'Publication lag in days for each series. Used for honest backtesting.',
     };
   });
   
