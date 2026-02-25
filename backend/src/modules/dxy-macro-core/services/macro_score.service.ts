@@ -1,20 +1,21 @@
 /**
- * MACRO SCORE SERVICE — B1 + B4.1 (Housing) + B4.2 (Activity) + B4.3 (Credit) + P2.4 (Liquidity)
+ * MACRO SCORE SERVICE — B1 + B4.1 (Housing) + B4.2 (Activity) + B4.3 (Credit) + P2.4 (Liquidity) + P3 (As-Of)
  * 
  * Computes composite macro score from all series.
  * B4.1: Housing component (MORTGAGE30US, HOUST, PERMIT, CSUSHPISA)
  * B4.2: Activity component (NAPM, INDPRO, TCU)
  * B4.3: Credit component (BAA10Y, BAMLH0A0HYM2, STLFSI4)
  * P2.4: Liquidity component (WALCL, RRP, TGA) — Fed liquidity impulse
+ * P3: As-Of mode — respects publication lag for honest backtesting
  * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
-import { buildAllMacroContexts, buildMacroContext } from './macro_context.service.js';
-import { getHousingScoreComponent } from './housing_context.service.js';
-import { getActivityScoreComponent } from './activity_context.service.js';
-import { getCreditScoreComponent } from './credit_context.service.js';
-import { getLiquidityMacroComponent } from '../../liquidity-engine/liquidity.regime.js';
+import { buildAllMacroContexts, buildMacroContext, buildMacroContextAsOf } from './macro_context.service.js';
+import { getHousingScoreComponent, getHousingScoreComponentAsOf } from './housing_context.service.js';
+import { getActivityScoreComponent, getActivityScoreComponentAsOf } from './activity_context.service.js';
+import { getCreditScoreComponent, getCreditScoreComponentAsOf } from './credit_context.service.js';
+import { getLiquidityMacroComponent, getLiquidityMacroComponentAsOf } from '../../liquidity-engine/liquidity.regime.js';
 import { getEnabledMacroSeries, MacroRole } from '../data/macro_sources.registry.js';
 import {
   MacroScore,
@@ -22,6 +23,7 @@ import {
   MacroContext,
   MacroConfidence,
 } from '../contracts/macro.contracts.js';
+import type { AsOfOptions } from '../../macro-asof/asof.contract.js';
 
 // ═══════════════════════════════════════════════════════════════
 // WEIGHTS BY ROLE — P2.4 UPDATE
