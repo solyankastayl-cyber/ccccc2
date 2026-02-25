@@ -47,6 +47,12 @@ export interface StressState {
   macroScoreSigned: number;
   triggered: boolean;
   level: GuardLevel;
+  // P2.4.2: Liquidity
+  liquidity?: {
+    impulse: number;
+    regime: string;
+    accelerated: boolean;
+  };
 }
 
 export interface GuardOutput {
