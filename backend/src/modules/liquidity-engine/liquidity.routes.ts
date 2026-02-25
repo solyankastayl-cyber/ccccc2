@@ -25,6 +25,8 @@ import {
 import {
   buildLiquidityContext,
   getLiquidityState,
+  buildLiquidityContextAsOf,
+  getLiquidityStateAsOf,
 } from './liquidity.impulse.js';
 
 import {
