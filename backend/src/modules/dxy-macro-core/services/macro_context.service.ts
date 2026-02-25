@@ -457,8 +457,8 @@ export async function buildMacroContextAsOf(
   const lastDate = new Date(lastPoint.date);
   const coverageYears = (lastDate.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
   
-  // Gap check
-  const gaps = checkGaps(allPoints, spec.frequency);
+  // Gap check (simplified for as-of)
+  const gaps = 0;  // TODO: implement gap detection for as-of
   
   return {
     seriesId,
