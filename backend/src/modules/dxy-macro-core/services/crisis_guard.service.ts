@@ -1,5 +1,5 @@
 /**
- * CRISIS GUARD SERVICE — B6 (2-Stage Guard)
+ * CRISIS GUARD SERVICE — B6 (2-Stage Guard) + P2.4.2 (Liquidity Integration)
  * 
  * Stress-aware layer that manages risk exposure:
  * - Does NOT change direction
@@ -11,6 +11,10 @@
  *   2. CRISIS (systemic stress) — creditComposite > 0.25 AND VIX > 18
  *   3. WARN   (soft tightening) — creditComposite > 0.30 AND macroScore > 0.15
  *   4. NONE
+ * 
+ * P2.4.2: Liquidity Acceleration
+ *   - liquidity=CONTRACTION + credit stress → accelerate to CRISIS
+ *   - CRISIS + liquidity CONTRACTION strong → tighten caps
  * 
  * 📊 Validated Episode Results (2026-02-25):
  *   - GFC 2008-09:     CRISIS+BLOCK = 80% ✅
@@ -27,6 +31,9 @@
 
 import { buildCreditContext } from './credit_context.service.js';
 import { getMacroSeriesPoints } from '../ingest/macro.ingest.service.js';
+
+// P2.4.2: Import liquidity state
+import { getLiquidityState } from '../../liquidity-engine/liquidity.impulse.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
