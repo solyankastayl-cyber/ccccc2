@@ -78,6 +78,32 @@ export async function getLiquidityMacroComponent(): Promise<{
   };
 }
 
+/**
+ * P3: Get liquidity component as of a specific date.
+ */
+export async function getLiquidityMacroComponentAsOf(asOfDate: string): Promise<{
+  key: string;
+  displayName: string;
+  scoreSigned: number;
+  weight: number;
+  confidence: number;
+  regime: LiquidityRegime;
+  available: boolean;
+}> {
+  const ctx = await buildLiquidityContextAsOf(asOfDate);
+  const scoreSigned = -ctx.state.impulse / 3;
+  
+  return {
+    key: 'LIQUIDITY',
+    displayName: 'Fed Liquidity Impulse',
+    scoreSigned: Math.round(scoreSigned * 1000) / 1000,
+    weight: LIQUIDITY_MACRO_WEIGHT,
+    confidence: ctx.state.confidence,
+    regime: ctx.state.regime,
+    available: ctx.meta.seriesAvailable > 0,
+  };
+}
+
 // ═══════════════════════════════════════════════════════════════
 // GUARD INTERACTION (P2.4.2)
 // ═══════════════════════════════════════════════════════════════
