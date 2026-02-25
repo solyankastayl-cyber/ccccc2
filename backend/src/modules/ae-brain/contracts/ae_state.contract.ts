@@ -1,6 +1,7 @@
 /**
  * C1 — State Vector Contract
  * Global state aggregator for AE Brain
+ * P2.4.3: Added liquidityImpulse axis
  */
 
 export interface AeStateVector {
@@ -12,10 +13,17 @@ export interface AeStateVector {
     dxySignalSigned: number;       // [-1..1] DXY direction signal
     dxyConfidence: number;         // [0..1] DXY confidence
     regimeBias90d: number;         // [-1..1] 90-day regime bias
+    liquidityImpulse: number;      // [-1..1] P2.4.3 — Fed liquidity impulse
   };
   health: {
     ok: boolean;
     missing: string[];
+  };
+  // P2.4.3: Liquidity details
+  liquidity?: {
+    impulse: number;               // Raw impulse (-3..+3)
+    regime: string;                // EXPANSION | NEUTRAL | CONTRACTION
+    confidence: number;            // 0..1
   };
 }
 
