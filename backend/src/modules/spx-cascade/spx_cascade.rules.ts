@@ -200,6 +200,61 @@ export function calcScenarioMultiplier(
 }
 
 /**
+ * P2.4.4: Calculate liquidity regime multiplier.
+ * 
+ * Fed liquidity impacts SPX exposure:
+ * - EXPANSION → 1.10 (boost)
+ * - NEUTRAL → 1.00 (no change)
+ * - CONTRACTION → 0.85 (reduce)
+ * 
+ * This is async but we provide a sync wrapper with cached value.
+ */
+export const LIQUIDITY_MULTIPLIERS_SPX = {
+  EXPANSION: 1.10,
+  NEUTRAL: 1.00,
+  CONTRACTION: 0.85,
+} as const;
+
+// Cached liquidity multiplier (updated async)
+let cachedLiquidityMultiplier = { value: 1.0, regime: 'NEUTRAL', updatedAt: 0 };
+
+/**
+ * Get cached liquidity multiplier (sync).
+ * Cache is refreshed every 5 minutes.
+ */
+export function getCachedLiquidityMultiplier(): { value: number; regime: string } {
+  return { value: cachedLiquidityMultiplier.value, regime: cachedLiquidityMultiplier.regime };
+}
+
+/**
+ * Refresh liquidity multiplier cache (async).
+ */
+export async function refreshLiquidityMultiplierCache(): Promise<void> {
+  try {
+    const result = await getSpxLiquidityMultiplier();
+    cachedLiquidityMultiplier = {
+      value: result.multiplier,
+      regime: result.regime,
+      updatedAt: Date.now(),
+    };
+  } catch (e) {
+    console.warn('[SPX Cascade] Liquidity multiplier unavailable:', (e as Error).message);
+  }
+}
+
+/**
+ * Calculate liquidity multiplier (sync, uses cache).
+ */
+export function calcLiquidityMultiplier(): number {
+  // Refresh cache in background if stale (>5 min)
+  if (Date.now() - cachedLiquidityMultiplier.updatedAt > 5 * 60 * 1000) {
+    refreshLiquidityMultiplierCache().catch(() => {});
+  }
+  
+  return cachedLiquidityMultiplier.value;
+}
+
+/**
  * Calculate threshold shift.
  * 
  * Reduces entry frequency during stress/conflict.
