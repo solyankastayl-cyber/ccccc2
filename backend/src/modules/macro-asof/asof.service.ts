@@ -76,6 +76,7 @@ export const SERIES_LAG_DAYS: Record<string, number> = {
   // ACTIVITY (Monthly, varies)
   // ─────────────────────────────────────────────────────────────
   'NAPM': 3,            // ISM PMI (first business day)
+  'MANEMP': 5,          // Manufacturing Employment (with payrolls)
   'INDPRO': 17,         // Industrial production
   'TCU': 17,            // Capacity utilization
   'RSXFS': 17,          // Retail sales
@@ -85,6 +86,7 @@ export const SERIES_LAG_DAYS: Record<string, number> = {
   // ─────────────────────────────────────────────────────────────
   'BAA10Y': 1,          // Baa spread (daily)
   'BAMLH0A0HYM2': 1,    // HY spread (daily)
+  'TEDRATE': 1,         // TED spread (daily)
   'STLFSI4': 7,         // St Louis Financial Stress (weekly)
   
   // ─────────────────────────────────────────────────────────────
