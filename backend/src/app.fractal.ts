@@ -469,6 +469,12 @@ async function main() {
   await registerGuardHysteresisRoutes(app);
   console.log('[Fractal] ✅ Guard Hysteresis P1.3 registered at /api/dxy-macro-core/guard/*');
   
+  // BLOCK P2: Register Liquidity Engine Module
+  console.log('[Fractal] Registering Liquidity Engine Module (P2)...');
+  const { registerLiquidityRoutes } = await import('./modules/liquidity-engine/liquidity.routes.js');
+  await registerLiquidityRoutes(app);
+  console.log('[Fractal] ✅ Liquidity Engine P2 registered at /api/liquidity/*');
+  
   // NOTE: SPX Phase routes already registered via spx-core module
   
   // BLOCK C: Register Combined Terminal (Building)
