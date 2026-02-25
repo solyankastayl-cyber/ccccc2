@@ -44,7 +44,7 @@ export interface BtcCascadeInputs {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CASCADE MULTIPLIERS
+// CASCADE MULTIPLIERS — P2.4.4 Updated
 // ═══════════════════════════════════════════════════════════════
 
 export interface BtcCascadeMultipliers {
@@ -56,6 +56,8 @@ export interface BtcCascadeMultipliers {
   mNovel: number;
   /** SPX coupling: spxAdj<0.4 → 0.75, >0.8 → 1.05 */
   mSPX: number;
+  /** P2.4.4: Liquidity multiplier: EXPANSION → 1.20, CONTRACTION → 0.75 */
+  mLiquidity: number;
   /** Raw total before guard cap */
   mTotalRaw: number;
   /** Final total after guard cap */
