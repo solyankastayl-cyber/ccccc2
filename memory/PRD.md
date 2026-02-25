@@ -365,8 +365,33 @@ type LiquidityState = {
 
 ## Next Steps
 
+### P3 — As-Of / Lagged Reality — IN PROGRESS
+
+**P3.1 — Add asOf parameter — COMPLETE ✅ (2026-02-25)**
+
+Lag profiles defined for 32 series:
+- CPI: 14 days
+- UNRATE: 5 days
+- WALCL: 7 days
+- RRP: 1 day
+- Case-Shiller: 60 days (!)
+
+API Endpoints with `?asOf=`:
+- `GET /api/dxy-macro-core/score?asOf=YYYY-MM-DD`
+- `GET /api/liquidity/state?asOf=YYYY-MM-DD`
+- `GET /api/liquidity/context?asOf=YYYY-MM-DD`
+- `GET /api/dxy-macro-core/lag-profiles`
+
+**Validation:**
+- Current: scoreSigned=-0.068
+- 2020-05-01 (COVID): scoreSigned=-0.141
+- 2022-10-01 (QT): scoreSigned=+0.045
+
+---
+
 ### Backlog
-- P3 — As-Of / Lagged Reality (honest backtest by release date)
+- P3.2 — Full as-of for housing/activity/credit composites
+- P3.3 — As-of backtest mode for D1.1/D2.1
 - P4 — Evidence / Explainability Contracts
 - P5 — Engine Global (asset allocation)
 - P6 — Frontend
