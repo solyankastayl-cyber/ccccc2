@@ -1,5 +1,5 @@
 /**
- * HOUSING CONTEXT SERVICE — B4.1
+ * HOUSING CONTEXT SERVICE — B4.1 + P3.2 (As-Of)
  * 
  * Computes context and pressure for housing & real estate series:
  * - MORTGAGE30US: 30Y Mortgage Rate
@@ -7,11 +7,14 @@
  * - PERMIT: Building Permits
  * - CSUSHPISA: Case-Shiller Home Price Index
  * 
+ * P3.2: Supports as-of queries for honest backtesting.
+ * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
 
 import { getMacroSeriesPoints, getLatestMacroPoint } from '../ingest/macro.ingest.service.js';
 import { getMacroSeriesSpec } from '../data/macro_sources.registry.js';
+import { filterByAsOf } from '../../macro-asof/asof.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
