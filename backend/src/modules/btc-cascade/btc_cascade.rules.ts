@@ -180,11 +180,12 @@ export function calcLiquidityMultiplier(): { value: number; regime: string } {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MAIN MULTIPLIER COMPUTATION
+// MAIN MULTIPLIER COMPUTATION — P2.4.4 Updated
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * Compute all multipliers from cascade inputs.
+ * P2.4.4: Added mLiquidity factor
  */
 export function computeMultipliers(
   inputs: BtcCascadeInputs,
@@ -195,8 +196,12 @@ export function computeMultipliers(
   const mNovel = calcNoveltyMultiplier(inputs.noveltyLabel);
   const mSPX = calcSpxCouplingMultiplier(inputs.spxAdj);
   
-  // Raw total (before guard cap)
-  const mTotalRaw = mStress * mScenario * mNovel * mSPX;
+  // P2.4.4: Liquidity multiplier
+  const liquidityInfo = calcLiquidityMultiplier();
+  const mLiquidity = liquidityInfo.value;
+  
+  // Raw total (before guard cap) — includes liquidity
+  const mTotalRaw = mStress * mScenario * mNovel * mSPX * mLiquidity;
   
   // Final total (after guard cap)
   const mTotal = Math.min(guardCap, mTotalRaw);
@@ -206,6 +211,7 @@ export function computeMultipliers(
     mScenario,
     mNovel,
     mSPX,
+    mLiquidity,  // P2.4.4
     mTotalRaw,
     mTotal,
   };
