@@ -390,11 +390,29 @@ API Endpoints with `?asOf=`:
 ---
 
 ### Backlog
-- P3.2 — Full as-of for housing/activity/credit composites
-- P3.3 — As-of backtest mode for D1.1/D2.1
+- P3.3 — As-of backtest mode for D1.1/D2.1 (NEXT)
 - P4 — Evidence / Explainability Contracts
 - P5 — Engine Global (asset allocation)
 - P6 — Frontend
+
+---
+
+## P3.2 — Full As-Of for Composites — COMPLETE ✅ (2026-02-25)
+
+**Implemented:**
+- `activity_context.service.ts`: Full as-of logic with filterByAsOf()
+- `credit_context.service.ts`: Full as-of logic with filterByAsOf()  
+- `macro_score.service.ts`: Updated to use AsOf versions when asOf param present
+- `asof.service.ts`: Added MANEMP (5d), TEDRATE (1d) lag profiles
+
+**Validation (2026-02-25):**
+| Date | Score | HOUSING | CREDIT | LIQUIDITY |
+|------|-------|---------|--------|-----------|
+| Current | -0.068 | +0.025 | +0.144 | -0.178 |
+| 2022-03-15 (QT) | -0.196 | -0.399 | +0.611 | -0.029 |
+| 2020-04-01 (QE) | -0.131 | -0.357 | +0.592 | -0.179 |
+
+**Note:** ACTIVITY composite shows N/A because MANEMP, INDPRO, TCU series have no data in DB. This is expected behavior — data ingestion required.
 
 ---
 
