@@ -303,6 +303,7 @@ export function computeOverlay(
 
 /**
  * Compute all multipliers.
+ * P2.4.4: Added mLiquidity factor
  */
 export function computeMultipliers(
   inputs: CascadeInputs,
@@ -326,11 +327,14 @@ export function computeMultipliers(
     inputs.ae.scenarios.bull
   );
   
+  // P2.4.4: Liquidity multiplier
+  const mLiquidity = calcLiquidityMultiplier();
+  
   // Guard cap
   const guardCap = GUARD_CAPS[overlay.guard.level];
   
-  // Confidence multiplier (before guard)
-  const confidenceMultiplier = mStress * mPersist * mNovel * mScenario;
+  // Confidence multiplier (before guard) — P2.4.4: includes liquidity
+  const confidenceMultiplier = mStress * mPersist * mNovel * mScenario * mLiquidity;
   
   // Size multiplier (after guard cap)
   const sizeMultiplier = Math.min(guardCap, confidenceMultiplier);
@@ -351,6 +355,7 @@ export function computeMultipliers(
       mPersist,
       mNovel,
       mScenario,
+      mLiquidity,  // P2.4.4
       guardCap,
     },
   };
