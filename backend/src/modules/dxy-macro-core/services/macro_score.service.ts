@@ -182,6 +182,39 @@ export async function computeMacroScore(): Promise<MacroScore> {
     console.warn('[Macro Score] Credit component unavailable:', (e as Error).message);
   }
   
+  // P2.4: Add Fed Liquidity Engine component
+  // Formula: scoreSigned = -impulse/3 (inverted for USD convention)
+  // Positive impulse (expansion) → negative score (USD bearish)
+  // Negative impulse (contraction) → positive score (USD bullish)
+  try {
+    const liquidityEngine = await getLiquidityMacroComponent();
+    
+    if (liquidityEngine.available) {
+      const liquidityNormalized = liquidityEngine.scoreSigned * LIQUIDITY_ENGINE_WEIGHT;
+      
+      components.push({
+        seriesId: liquidityEngine.key,
+        displayName: liquidityEngine.displayName,
+        role: 'liquidity',  // Reuse role, but this is P2 engine not M2
+        weight: LIQUIDITY_ENGINE_WEIGHT,
+        rawPressure: liquidityEngine.scoreSigned,
+        normalizedPressure: Math.round(liquidityNormalized * 1000) / 1000,
+        regime: liquidityEngine.regime,
+        // Extended fields for drivers
+        _liquidityDetails: {
+          impulse: liquidityEngine.scoreSigned * -3,  // Reconstruct original impulse
+          confidence: liquidityEngine.confidence,
+          regime: liquidityEngine.regime,
+        },
+      } as MacroScoreComponent & { _liquidityDetails: any });
+      
+      totalWeight += LIQUIDITY_ENGINE_WEIGHT;
+      weightedSum += liquidityNormalized;
+    }
+  } catch (e) {
+    console.warn('[Macro Score] Liquidity Engine component unavailable:', (e as Error).message);
+  }
+  
   // Normalize to -1..+1
   const scoreSigned = totalWeight > 0 ? weightedSum / totalWeight : 0;
   
