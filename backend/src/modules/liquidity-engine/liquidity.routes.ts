@@ -35,6 +35,14 @@ import {
   getLiquidityForStateVector,
 } from './liquidity.regime.js';
 
+// P2.5: Episode validation
+import {
+  validateEpisode,
+  validateAllEpisodes,
+  PREDEFINED_EPISODES,
+  EpisodeValidationInput,
+} from './liquidity.validate.js';
+
 // ═══════════════════════════════════════════════════════════════
 // REGISTER ROUTES
 // ═══════════════════════════════════════════════════════════════
