@@ -1,7 +1,8 @@
 /**
- * MACRO CONTEXT SERVICE — B1
+ * MACRO CONTEXT SERVICE — B1 + P3 (As-Of)
  * 
  * Computes context (current, deltas, trend, regime, pressure) for each series.
+ * P3: Supports as-of queries for honest backtesting.
  * 
  * ISOLATION: No imports from DXY/BTC/SPX modules
  */
@@ -18,6 +19,9 @@ import {
   CurveRegime,
   LiquidityRegime,
 } from '../contracts/macro.contracts.js';
+
+// P3: Import as-of utilities
+import { filterByAsOf, getSeriesLag } from '../../macro-asof/asof.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // STATISTICAL HELPERS
