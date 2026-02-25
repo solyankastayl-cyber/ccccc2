@@ -311,43 +311,62 @@ type LiquidityState = {
 
 ---
 
-### P2.4 Integration — COMPLETE ✅ (2026-02-25)
+### P2.5 Episode Validation — COMPLETE ✅ (2026-02-25)
 
-**P2.4.1 Macro Score:**
-- LIQUIDITY component added (weight=0.20)
-- Rescaled weights: core=0.44, housing/activity/credit=0.12 each
-- scoreSigned = -impulse/3 (inverted for USD convention)
-- Shows in `keyDrivers` when significant
+**Validated Episodes:**
 
-**P2.4.2 Guard Interaction:**
-- `shouldAccelerateCrisis()` checks liquidity+credit stress
-- CONTRACTION + rising credit → accelerate CRISIS transition
+| Episode | Period | Expected | Coverage | AvgImpulse | Result |
+|---------|--------|----------|----------|------------|--------|
+| 2020 QE | 2020-03 → 2021-03 | EXPANSION | 37.7% | +0.198 | **PASS** |
+| 2022 QT | 2022-04 → 2023-01 | CONTRACTION | 37.5% | -0.465 | **PASS** |
 
-**P2.4.3 AE State Vector:**
-- New axis: `liquidityImpulse` (-1..+1)
-- Full liquidity details in response
-- State vector now 7-dimensional
+**Key Findings:**
+- Direction correctly identified in both episodes
+- Expected regime > Opposite regime in both cases
+- Avg impulse sign matches expected direction
 
-**P2.4.4 Cascade Multipliers:**
-| Asset | EXPANSION | NEUTRAL | CONTRACTION |
-|-------|-----------|---------|-------------|
-| SPX | 1.10 | 1.00 | 0.85 |
-| BTC | 1.20 | 1.00 | 0.75 |
+**API:** `GET /api/liquidity/validate/episodes`
 
-- `mLiquidity` factor added to both cascades
-- Cached with 5-min refresh
-- Shows in cascade explanations
+---
+
+### D1.1/D2.1 Cascade Validation with Liquidity — COMPLETE ✅
+
+**SPX Cascade (2021-2025 OOS):**
+| Metric | Baseline | Cascade | Delta |
+|--------|----------|---------|-------|
+| MaxDD | 15.77% | 14.54% | **-7.8%** ✅ |
+| Volatility | - | - | **-7.2%** ✅ |
+| Equity | 1.0818 | 1.0798 | -0.18% |
+| HitRate | 52.9% | 52.9% | 0% |
+
+**BTC Cascade (2021-2025 OOS):**
+| Metric | Baseline | Cascade | Delta |
+|--------|----------|---------|-------|
+| MaxDD | 57.28% | 53.31% | **-6.9%** ✅ |
+| Volatility | - | - | **-9.0%** ✅ |
+| Equity | 1.3775 | 1.4177 | **+2.9%** ✅ |
+| HitRate | 48.6% | 48.6% | 0% |
+
+---
+
+### P2.4.2 Guard Integration — COMPLETE ✅ (2026-02-25)
+
+**Liquidity Acceleration Rules:**
+- CONTRACTION + credit stress (>15%) → accelerate to CRISIS
+- CRISIS + CONTRACTION → extra 15% size haircut
+
+**Thresholds:**
+- Credit threshold: 0.15 (lower than standard CRISIS)
+- Impulse threshold: -0.50 (strong contraction)
+
+**API:** Guard state now includes `liquidity` field with impulse/regime/accelerated
 
 ---
 
 ## Next Steps
 
-### Immediate
-1. **P2.5 Episode Validation** — Historical backtest (2020 QE, 2022 QT)
-2. **D1.1/D2.1 Rerun** — Validate DD improvement with liquidity
-
 ### Backlog
-- P3 — As-Of / Lagged Reality (honest backtest)
+- P3 — As-Of / Lagged Reality (honest backtest by release date)
 - P4 — Evidence / Explainability Contracts
 - P5 — Engine Global (asset allocation)
 - P6 — Frontend
