@@ -233,6 +233,7 @@ KNN cosine distance (K=20):
 - **D2 — BTC Cascade** ✅
 - **D2.1 — BTC OOS Validation** ✅
 - **P1.4 — Fix Intermittent Test** ✅ FIXED (2026-02-25)
+- **P2.1 — Liquidity Data Ingestion** ✅ COMPLETE (2026-02-25)
 
 ### Frozen ❄️
 - SPX Module
@@ -241,16 +242,105 @@ KNN cosine distance (K=20):
 
 ---
 
+## P2 Liquidity Engine — IN PROGRESS
+
+### P2.1 Data Ingestion — COMPLETE ✅ (2026-02-25)
+
+**Fed Liquidity Series:**
+| Series | Description | Points |
+|--------|-------------|--------|
+| WALCL | Fed Balance Sheet | 1210 |
+| RRPONTSYD | Reverse Repo (RRP) | 3187 |
+| WTREGEN | Treasury General Account | 1210 |
+
+**Total Points:** 5607
+
+**Data Range:** 2002 → 2026
+
+**API Endpoints:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/liquidity/admin/ingest` | Ingest all series |
+| GET | `/api/liquidity/health` | Module health |
+| GET | `/api/liquidity/context` | Full context |
+| GET | `/api/liquidity/state` | Current impulse state |
+| GET | `/api/liquidity/state-vector` | For AE Brain |
+| GET | `/api/liquidity/macro-component` | For Macro Score |
+| GET | `/api/liquidity/cascade/spx` | SPX multiplier |
+| GET | `/api/liquidity/cascade/btc` | BTC multiplier |
+| GET | `/api/liquidity/crisis-check` | Crisis acceleration |
+
+**Normalization:**
+- Weekly-as-of (Friday)
+- Deltas: Δ4w, Δ13w, Δ26w
+- Rolling Z-score (5-year window)
+
+---
+
+### P2.2 Liquidity Impulse — COMPLETE ✅
+
+**Formula:**
+```
+liquidityImpulse = + Z(ΔWALCL) - Z(ΔRRP) - Z(ΔTGA)
+```
+
+**Signs:**
+- WALCL: + (expansion adds liquidity)
+- RRP: - (absorbs liquidity)
+- TGA: - (absorbs liquidity)
+
+**Output:**
+```typescript
+type LiquidityState = {
+  impulse: number;       // -3..+3
+  regime: "EXPANSION" | "CONTRACTION" | "NEUTRAL";
+  confidence: number;    // 0..1
+  components: { walcl, rrp, tga };
+}
+```
+
+---
+
+### P2.3 Regime Rules — COMPLETE ✅
+
+| Condition | Regime |
+|-----------|--------|
+| impulse > +0.75 | EXPANSION |
+| impulse < -0.75 | CONTRACTION |
+| else | NEUTRAL |
+
+---
+
+### P2.4 Integration — READY
+
+**1. Macro Score (weight 0.20):**
+- scoreSigned = -impulse/3 (inverted for USD convention)
+
+**2. Guard Interaction:**
+- liquidity=CONTRACTION + credit↑ → accelerate CRISIS
+
+**3. AE Brain State Vector:**
+- New axis: liquidityImpulse (-1..+1)
+
+**4. Cascade Multipliers:**
+| Asset | EXPANSION | NEUTRAL | CONTRACTION |
+|-------|-----------|---------|-------------|
+| SPX | 1.10 | 1.00 | 0.85 |
+| BTC | 1.20 | 1.00 | 0.75 |
+
+---
+
 ## Next Steps
 
 ### Immediate
-1. **P1.4** — Deterministic Backend (11/11 tests) ✅ FIXED
-2. **P2** — Liquidity Engine (WALCL, RRP, TGA)
+1. **P2 Validation** — Historical backtest (2020 QE, 2022 QT)
+2. **P2.4 Integration** — Wire into Macro Score, AE Brain, Cascade
 
 ### Backlog
-- C8.2 — Rolling Transition Matrix
 - P3 — As-Of / Lagged Reality (honest backtest)
 - P4 — Evidence / Explainability Contracts
+- P5 — Engine Global (asset allocation)
+- P6 — Frontend
 
 ---
 
