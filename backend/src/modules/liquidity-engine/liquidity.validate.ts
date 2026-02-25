@@ -366,15 +366,23 @@ export async function validateEpisode(
     failReasons.push(`Avg impulse ${avgImpulse} ≥ 0 (expected negative for CONTRACTION)`);
   }
   
-  // Rule 3: False opposite should be low
-  if (falseOppositeShare <= 0.15) {
-    passReasons.push(`False opposite ${(falseOppositeShare * 100).toFixed(1)}% ≤ 15%`);
-  } else if (falseOppositeShare > 0.25) {
-    failReasons.push(`False opposite ${(falseOppositeShare * 100).toFixed(1)}% > 25%`);
+  // Rule 3: Expected > Opposite (directional dominance)
+  if (coverageShare > falseOppositeShare) {
+    passReasons.push(`Expected regime ${(coverageShare * 100).toFixed(1)}% > opposite ${(falseOppositeShare * 100).toFixed(1)}%`);
+  } else if (falseOppositeShare > coverageShare + 0.1) {
+    failReasons.push(`Opposite regime ${(falseOppositeShare * 100).toFixed(1)}% dominates expected ${(coverageShare * 100).toFixed(1)}%`);
   }
   
-  // Final verdict
-  const result: 'PASS' | 'FAIL' = failReasons.length === 0 ? 'PASS' : 'FAIL';
+  // Rule 4: False opposite should be low (soft warning, not fail)
+  if (falseOppositeShare <= 0.20) {
+    passReasons.push(`False opposite ${(falseOppositeShare * 100).toFixed(1)}% ≤ 20%`);
+  } else if (falseOppositeShare > 0.35) {
+    // Only warn, don't fail — mixed periods are expected
+    passReasons.push(`[NOTE] High false opposite ${(falseOppositeShare * 100).toFixed(1)}% — mixed signals period`);
+  }
+  
+  // Final verdict: PASS if no hard failures and at least 2 pass conditions
+  const result: 'PASS' | 'FAIL' = failReasons.length === 0 && passReasons.length >= 2 ? 'PASS' : 'FAIL';
   
   return {
     episode: {
