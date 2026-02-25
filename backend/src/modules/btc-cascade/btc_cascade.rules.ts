@@ -218,11 +218,12 @@ export function computeMultipliers(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// NOTES GENERATION
+// NOTES GENERATION — P2.4.4 Updated
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * Generate human-readable notes explaining the cascade.
+ * P2.4.4: Added liquidity notes
  */
 export function generateNotes(
   inputs: BtcCascadeInputs,
@@ -265,6 +266,14 @@ export function generateNotes(
     notes.push(`SPX risk-off (adj=${(inputs.spxAdj * 100).toFixed(0)}%) → BTC reduced`);
   } else if (inputs.spxAdj > SPX_HIGH_THRESHOLD) {
     notes.push(`SPX risk-on (adj=${(inputs.spxAdj * 100).toFixed(0)}%) → BTC boosted`);
+  }
+  
+  // P2.4.4: Liquidity notes
+  const liquidityInfo = calcLiquidityMultiplier();
+  if (liquidityInfo.regime === 'CONTRACTION') {
+    notes.push(`Fed Liquidity CONTRACTION → BTC reduced (×${multipliers.mLiquidity.toFixed(2)})`);
+  } else if (liquidityInfo.regime === 'EXPANSION') {
+    notes.push(`Fed Liquidity EXPANSION → BTC boosted (×${multipliers.mLiquidity.toFixed(2)})`);
   }
   
   // Regime note
