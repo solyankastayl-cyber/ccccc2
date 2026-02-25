@@ -382,3 +382,155 @@ export async function buildAllMacroContexts(): Promise<MacroContext[]> {
   
   return contexts;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// P3: AS-OF CONTEXT BUILDING
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * P3: Build context for a single series as of a specific date.
+ * Only uses data that would have been available at asOfDate.
+ */
+export async function buildMacroContextAsOf(
+  seriesId: string,
+  asOfDate: string
+): Promise<MacroContext | null> {
+  const spec = getMacroSeriesSpec(seriesId);
+  if (!spec) return null;
+  
+  // Get all points
+  const rawPoints = await getMacroSeriesPoints(seriesId);
+  
+  // P3: Filter by publication lag
+  const allPoints = filterByAsOf(rawPoints, asOfDate, seriesId);
+  
+  if (allPoints.length < 13) return null;  // Need at least 1 year of data
+  
+  const values = allPoints.map(p => p.value);
+  const lastPoint = allPoints[allPoints.length - 1];
+  
+  // Compute primary transform value
+  let currentValue = lastPoint.value;
+  let yoy: number | undefined;
+  let mom: number | undefined;
+  
+  if (spec.primaryTransform === 'yoy') {
+    yoy = computeYoY(allPoints) ?? undefined;
+    if (yoy !== undefined) currentValue = yoy;
+  } else if (spec.primaryTransform === 'mom') {
+    mom = computeMoM(allPoints) ?? undefined;
+    if (mom !== undefined) currentValue = mom;
+  }
+  
+  // Compute deltas
+  const delta1m = computeDelta(allPoints, 1) ?? undefined;
+  const delta3m = computeDelta(allPoints, 3) ?? undefined;
+  const delta12m = computeDelta(allPoints, 12) ?? undefined;
+  
+  // Compute YoY for secondary if not primary
+  if (spec.primaryTransform !== 'yoy') {
+    yoy = computeYoY(allPoints) ?? undefined;
+  }
+  
+  // Statistics
+  const rollingWindow = spec.frequency === 'monthly' ? 120 : 252 * 3;
+  const recentValues = values.slice(-Math.min(rollingWindow, values.length));
+  const m = mean(recentValues);
+  const sd = stdDev(recentValues);
+  const z = zScore(currentValue, m, sd);
+  const pct = percentile(recentValues, currentValue);
+  
+  // Trend
+  const trend = computeTrend(allPoints, spec.primaryTransform);
+  
+  // Regime
+  const regime = classifyRegime(spec.role, currentValue, yoy, delta3m, delta12m);
+  
+  // Pressure
+  const pressure = computePressure(spec.role, regime, z, currentValue);
+  
+  // Freshness (relative to asOfDate)
+  const freshness = classifyFreshnessAsOf(lastPoint.date, spec.frequency, asOfDate);
+  
+  // Coverage
+  const firstDate = new Date(allPoints[0].date);
+  const lastDate = new Date(lastPoint.date);
+  const coverageYears = (lastDate.getTime() - firstDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  
+  // Gap check
+  const gaps = checkGaps(allPoints, spec.frequency);
+  
+  return {
+    seriesId,
+    displayName: spec.displayName,
+    role: spec.role,
+    frequency: spec.frequency,
+    current: {
+      value: Math.round(currentValue * 10000) / 10000,
+      date: lastPoint.date,
+      delta1m: delta1m !== undefined ? Math.round(delta1m * 10000) / 10000 : undefined,
+      delta3m: delta3m !== undefined ? Math.round(delta3m * 10000) / 10000 : undefined,
+      delta12m: delta12m !== undefined ? Math.round(delta12m * 10000) / 10000 : undefined,
+      yoy: yoy !== undefined ? Math.round(yoy * 10000) / 10000 : undefined,
+    },
+    stats: {
+      mean: Math.round(m * 10000) / 10000,
+      stdDev: Math.round(sd * 10000) / 10000,
+      zScore: Math.round(z * 100) / 100,
+      percentile: pct,
+    },
+    trend,
+    regime,
+    pressure: Math.round(pressure * 1000) / 1000,
+    quality: {
+      freshness,
+      coverage: Math.round(coverageYears * 10) / 10,
+      gaps,
+    },
+    updatedAt: asOfDate,  // Use asOf date
+  };
+}
+
+/**
+ * P3: Freshness classification relative to asOf date
+ */
+function classifyFreshnessAsOf(
+  lastDate: string,
+  frequency: string,
+  asOfDate: string
+): 'FRESH' | 'STALE' | 'OLD' {
+  const asOf = new Date(asOfDate);
+  const last = new Date(lastDate);
+  const daysSince = (asOf.getTime() - last.getTime()) / (24 * 60 * 60 * 1000);
+  
+  if (frequency === 'daily') {
+    if (daysSince <= 7) return 'FRESH';
+    if (daysSince <= 30) return 'STALE';
+    return 'OLD';
+  } else if (frequency === 'monthly') {
+    if (daysSince <= 45) return 'FRESH';
+    if (daysSince <= 90) return 'STALE';
+    return 'OLD';
+  }
+  
+  if (daysSince <= 14) return 'FRESH';
+  if (daysSince <= 45) return 'STALE';
+  return 'OLD';
+}
+
+/**
+ * P3: Build contexts for all series as of a specific date
+ */
+export async function buildAllMacroContextsAsOf(asOfDate: string): Promise<MacroContext[]> {
+  const metas = await getAllSeriesMeta();
+  const contexts: MacroContext[] = [];
+  
+  for (const meta of metas) {
+    const ctx = await buildMacroContextAsOf(meta.seriesId, asOfDate);
+    if (ctx) {
+      contexts.push(ctx);
+    }
+  }
+  
+  return contexts;
+}
